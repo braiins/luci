@@ -15,15 +15,11 @@ Author: Libor Vasicek <libor.vasicek@braiins.cz>
 ]]--
 
 local fs = require "nixio.fs"
---[[
 local sys = require "luci.sys"
 require "ubus"
-]]--
 
 m = Map("cgminer", translate("CGMiner"), translate("Miner general configuration"))
---[[
-m.on_after_commit = function() luci.sys.call("/etc/init.d/cgminer restart") end
-]]--
+m.on_after_commit = function() luci.sys.call("/etc/init.d/cgminer reload") end
 
 s = m:section(TypedSection, "pool", translate("Pools"))
 s.anonymous = true
