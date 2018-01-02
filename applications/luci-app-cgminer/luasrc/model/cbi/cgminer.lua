@@ -25,35 +25,42 @@ s = m:section(TypedSection, "pool", translate("Pools"))
 s.anonymous = true
 s.addremove = true
 
-server = s:option(Value, "server", translate("Server"))
-server.datatype = "string"
-server.placeholder = "stratum+tcp://stratum.slushpool.com"
+o = s:option(Value, "server", translate("Server"))
+o.datatype = "string"
+o.placeholder = "stratum+tcp://stratum.slushpool.com"
 
-port = s:option(Value, "port", translate("Port"))
-port.datatype = "portrange"
-port.placeholder = "3333"
+o = s:option(Value, "port", translate("Port"))
+o.datatype = "portrange"
+o.placeholder = "3333"
 
-user = s:option(Value, "user", translate("User"))
-user.datatype = "string"
+o = s:option(Value, "user", translate("User"))
+o.datatype = "string"
 
-password = s:option(Value, "password", translate("Password"))
-password.datatype = "string"
+o = s:option(Value, "password", translate("Password"))
+o.datatype = "string"
 
 s = m:section(TypedSection, "miner", translate("Miner"),
 	translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
 s.anonymous = true
 s.addremove = false
 
-frequency = s:option(Value, "frequency", translate("Frequency (MHz)"),
+o = s:option(Value, "frequency", translate("Frequency (MHz)"),
 	translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
-frequency.datatype = "range(120,1332)"
-frequency.placeholder = "1332"
-frequency.default = 1332
+o.datatype = "range(120,1332)"
+o.placeholder = "1332"
+o.default = 1332
 
-voltage = s:option(Value, "voltage", translate("Voltage (Level)"),
+o = s:option(Value, "voltage", translate("Voltage (Level)"),
 	translate("The lower VID value means the higher voltage and higher power consumption."))
-voltage.datatype = "range(10,15)"
-voltage.placeholder = "13"
-voltage.default = 13
+o.datatype = "range(10,15)"
+o.placeholder = "13"
+o.default = 13
+
+o = s:option(StaticList, "chains", translate("Enabled Chains"))
+o.widget = "checkbox"
+o.rmempty = true
+for i=0,5 do
+	o:value(i)
+end
 
 return m
