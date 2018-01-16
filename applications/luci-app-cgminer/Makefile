@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI Support for ASIC and FPGA Miner for Bitcoin
-LUCI_DEPENDS:=+cgminer
+LUCI_DEPENDS:=+cgminer +cgminer_monitor +luasocket
 
 PKG_MAINTAINER:=Libor Vasicek <libor.vasicek@braiins.cz>
 PKG_LICENSE:=Apache-2.0
