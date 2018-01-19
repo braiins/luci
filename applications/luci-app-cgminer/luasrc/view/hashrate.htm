@@ -29,6 +29,8 @@ var line_hashrate = [];
 
 var label_hashrate = {};
 var label_chain = [];
+var label_accepted = [];
+var label_rejected = [];
 
 var sample_stamp = 0;
 var sample = [];
@@ -82,6 +84,8 @@ window.setTimeout(
             }
             for (i = 0; i < VIEW_CHAINS; ++i) {
                 label_chain[i] = document.getElementById('lb_hashrate_chain' + i);
+                label_accepted[i] = document.getElementById('lb_accepted_chain' + i);
+                label_rejected[i] = document.getElementById('lb_rejected_chain' + i);
             }
 
             /* plot horizontal time interval lines */
@@ -212,14 +216,27 @@ window.setTimeout(
                         if (j < chains.length && i === chains[j]["id"])
                         {
                             var chain = chains[j++];
-                            label_chain[i].innerHTML = (chain["mhs"][0] / 1000).toFixed(2) + ' Gh/s';
+                            var mhs = chain["mhs"][0];
+                            label_chain[i].innerHTML = (mhs ? (mhs / 1000).toFixed(2) : 0) + ' Gh/s';
                             for (k = 0; k < VIEW_HASHRATES; ++k) {
                                 hashrate_cur[k] += chain["mhs"][k + 1];
+                            }
+                            var accepted = chain["acpt"];
+                            var rejected = chain["rjct"];
+                            var ar_sum = accepted + rejected;
+                            label_accepted[i].innerHTML = accepted;
+                            label_rejected[i].innerHTML = rejected;
+                            if (ar_sum)
+                            {
+                                label_accepted[i].innerHTML += ' (' + (accepted / ar_sum * 100).toFixed(1) + '%)';
+                                label_rejected[i].innerHTML += ' (' + (rejected / ar_sum * 100).toFixed(1) + '%)';
                             }
                         }
                         else
                         {
                             label_chain[i].innerHTML = 0 + ' Mh/s';
+                            label_accepted[i].innerHTML = 0;
+                            label_rejected[i].innerHTML = 0;
                         }
                     }
 
@@ -277,24 +294,48 @@ window.setTimeout(
   <td id="lb_hashrate3_peak">0</td>
  </tr>
  <tr>
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 0:%></strong></td>
-  <td id="lb_hashrate_chain0">0</td>
+  <td style="text-align:right; vertical-align:top"><strong><%:Chain 0:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
+  <td>
+   <span id="lb_hashrate_chain0">0</span><br />
+   <small id="lb_accepted_chain0">0</small><br />
+   <small id="lb_rejected_chain0">0</small>
+  </td>
 
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 1:%></strong></td>
-  <td id="lb_hashrate_chain1">0</td>
+  <td style="text-align:right; vertical-align:top"><strong><%:Chain 1:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
+  <td>
+   <span id="lb_hashrate_chain1">0</span><br />
+   <small id="lb_accepted_chain1">0</small><br />
+   <small id="lb_rejected_chain1">0</small>
+  </td>
 
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 2:%></strong></td>
-  <td id="lb_hashrate_chain2">0</td>
+  <td style="text-align:right; vertical-align:top"><strong><%:Chain 2:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
+  <td>
+   <span id="lb_hashrate_chain2">0</span><br />
+   <small id="lb_accepted_chain2">0</small><br />
+   <small id="lb_rejected_chain2">0</small>
+  </td>
  </tr>
  <tr>
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 3:%></strong></td>
-  <td id="lb_hashrate_chain3">0</td>
+  <td style="text-align:right; vertical-align:top"><strong><%:Chain 3:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
+  <td>
+   <span id="lb_hashrate_chain3">0</span><br />
+   <small id="lb_accepted_chain3">0</small><br />
+   <small id="lb_rejected_chain3">0</small>
+  </td>
 
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 4:%></strong></td>
-  <td id="lb_hashrate_chain4">0</td>
+  <td style="text-align:right; vertical-align:top"><strong><%:Chain 4:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
+  <td>
+   <span id="lb_hashrate_chain4">0</span><br />
+   <small id="lb_accepted_chain4">0</small><br />
+   <small id="lb_rejected_chain4">0</small>
+  </td>
 
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 5:%></strong></td>
-  <td id="lb_hashrate_chain5">0</td>
+  <td style="text-align:right; vertical-align:top"><strong><%:Chain 5:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
+  <td>
+   <span id="lb_hashrate_chain5">0</span><br />
+   <small id="lb_accepted_chain5">0</small><br />
+   <small id="lb_rejected_chain5">0</small>
+  </td>
  </tr>
 </table>
 
