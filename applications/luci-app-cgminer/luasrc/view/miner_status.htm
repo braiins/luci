@@ -6,6 +6,6 @@ local fs = require "nixio.fs"
 	<legend><%:Miner%></legend>
 
 	<table width="100%" cellspacing="10">
-		<tr><td width="33%"><%:Hardware ID%></td><td><%=fs.readfile('/etc/miner_hwid')%></td></tr>
+		<tr><td width="33%"><%:Hardware ID%></td><td><%=fs.readfile('/tmp/miner_hwid')%></td></tr>
 	</table>
 </fieldset>
