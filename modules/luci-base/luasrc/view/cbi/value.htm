@@ -6,6 +6,7 @@
 		attr("class", self.password and "cbi-input-password" or "cbi-input-text") ..
 		attr("value", self:cfgvalue(section) or self.default) ..
 		ifattr(self.size, "size") ..
+		ifattr(self.style, "style") ..
 		ifattr(self.placeholder, "placeholder") ..
 		ifattr(self.readonly, "readonly") ..
 		ifattr(self.maxlength, "maxlength") ..

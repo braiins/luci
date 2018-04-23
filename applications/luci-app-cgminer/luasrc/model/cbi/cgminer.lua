@@ -16,31 +16,234 @@ Author: Libor Vasicek <libor.vasicek@braiins.cz>
 
 local fs = require "nixio.fs"
 local sys = require "luci.sys"
+local util = require("luci.util")
+local class = util.class
 require "ubus"
 
 local DEFAULT_FREQUENCY = 1332
 local DEFAULT_VOLTAGE = 10
+local CGMINER_CONFIG = '/etc/cgminer.conf'
 
-m = Map("cgminer", translate("CGMiner"), translate("Miner general configuration"))
+local function fill_ids(t)
+	local used = {}
+	local max = 0
+	for i, v in ipairs(t) do
+		assert(type(v) == 'table')
+		if v._id then
+			local id = tonumber(v._id)
+			if id then
+				used[id] = true
+				max = math.max(max, id)
+			end
+		end
+	end
+	for i, v in ipairs(t) do
+		assert(type(v) == 'table')
+		if not v._id then
+			repeat
+				max = max + 1
+			until not used[max]
+			v._id = tostring(max)
+		end
+	end
+end
+
+local function get_by_id(t, id)
+	for i, v in ipairs(t) do
+		assert(type(t) == 'table')
+		if v._id == id then
+			return v, i
+		end
+	end
+	return nil
+end
+
+local function parse_sect_name(s)
+	local name, id = s:match('(%w+)%_(%w+)')
+	if name then
+		return name, id
+	else
+		return s
+	end
+end
+
+local function make_sect_name(name, id)
+	return ('%s_%s'):format(name, id)
+end
+
+
+local obj_handlers = {
+	pool = {
+		get = function (json, id, key)
+			local pool = get_by_id(json.pools, id)
+			if not pool then return {} end
+			return pool[key]
+		end,
+		set = function (json, id, key, val)
+			local pool = get_by_id(json.pools, id)
+			if not pool then return end
+			pool[key] = val
+		end,
+		del = function (json, id)
+			local pool, i = get_by_id(json.pools, id)
+			assert(pool)
+			table.remove(json.pools, i)
+		end,
+		add = function (json)
+			local pos = #json.pools + 1
+			local t = {
+				url = '',
+				user = '',
+				pass = '',
+			}
+			json.pools[pos] = t
+			fill_ids(json.pools)
+			return json.pools[pos]._id
+		end,
+		keys = { 'url', 'user', 'pass' }
+	},
+	miner = {
+		get = function (json, id, key)
+			if key == 'frequency' then
+				return json.A1Pll1
+			elseif key == 'voltage' then
+				return json.A1Vol
+			elseif key == 'chains' then
+				return luci.util.split(json['enabled-chains'] or '', ',')
+			end
+		end,
+		set = function (json, id, key, val)
+			if key == 'frequency' then
+				for i = 1, 6 do
+					json[('A1Pll%d'):format(i)] = val
+				end
+			elseif key == 'voltage' then
+				json.A1Vol = val
+			elseif key == 'chains' then
+				if val == '' then val = {} end
+				json['enabled-chains'] = table.concat(val, ',')
+			end
+		end,
+		keys = { 'frequency', 'voltage', 'chains' }
+	}
+}
+
+local function get_handler(s)
+	local name, id = parse_sect_name(s)
+	if not name then return nil end
+	return obj_handlers[name], id, name
+end
+
+JsonUCICursor = class()
+
+function JsonUCICursor.__init__(self)
+end
+
+function JsonUCICursor.commit(self, config)
+end
+
+function JsonUCICursor.unload(self, config)
+end
+
+function JsonUCICursor.load(self, config)
+	local str = nixio.fs.readfile(CGMINER_CONFIG) or ""
+	self.json = luci.jsonc.parse(str)
+	assert(self.json)
+	assert(type(self.json) == 'table')
+	assert(self.json.pools)
+	assert(type(self.json.pools) == 'table')
+	return true
+end
+
+function JsonUCICursor.save(self, config)
+	nixio.fs.writefile(CGMINER_CONFIG, luci.jsonc.stringify(self.json))
+end
+
+function JsonUCICursor.foreach(self, config, sectiontype, fn)
+	if sectiontype == 'pool' then
+		fill_ids(self.json.pools)
+		for i, pool in ipairs(self.json.pools) do
+			fn{ ['.name'] = make_sect_name('pool', pool._id) }
+		end
+	elseif sectiontype == 'miner' then
+		fn{ ['.name'] = 'miner' }
+	end
+end
+
+function JsonUCICursor.add(self, config, sectiontype)
+	local handler, id, name = get_handler(sectiontype)
+	assert(handler)
+	assert(handler.add)
+	local new_id = handler.add(self.json)
+	return make_sect_name(name, new_id)
+end
+
+function JsonUCICursor.delete(self, config, section, option)
+	if option then return self:set(config, section, option, '') end
+	local handler, id = get_handler(section)
+	assert(handler)
+	assert(handler.del)
+	handler.del(self.json, id)
+end
+
+function JsonUCICursor.set(self, config, section, option, value)
+	local handler, id = get_handler(section)
+	assert(handler)
+	handler.set(self.json, id, option, value)
+end
+
+function JsonUCICursor.get(self, config, section, option)
+	local handler, id = get_handler(section)
+	assert(handler)
+	return handler.get(self.json, id, option)
+end
+
+function JsonUCICursor.get_all(self, config, section)
+	local handler, id = get_handler(section)
+	assert(handler)
+	local t = {}
+	for _, key in ipairs(handler.keys) do
+		t[key] = handler.get(self.json, id, key)
+	end
+	return t
+end
+
+local config = {
+	name = "cgminer",
+	uci = JsonUCICursor(),
+}
+
+local ok, errno, errstr = nixio.fs.access(CGMINER_CONFIG, "r", "w")
+if not ok then
+	m = Map("cgminer", translate("CGMiner"), translate("Miner general configuration"))
+	s = m:section(SimpleSection, translate("Errors"))
+	s.error = { { ('Cannot access %s: %s'):format(CGMINER_CONFIG, errstr) } }
+	return m
+end
+
+m = Map(config, translate("CGMiner"), translate("Miner general configuration"))
 m.on_after_commit = function() luci.sys.call("/etc/init.d/cgminer reload") end
 
 s = m:section(TypedSection, "pool", translate("Pools"))
 s.anonymous = true
 s.addremove = true
 
-o = s:option(Value, "server", translate("Server"))
+o = s:option(Value, "url", translate("Pool URL"))
 o.datatype = "string"
-o.placeholder = "stratum+tcp://stratum.slushpool.com"
-
-o = s:option(Value, "port", translate("Port"))
-o.datatype = "portrange"
-o.placeholder = "3333"
+o.optional = false
+o.rmempty = false
+o.style = "width: 40em"
+o.default = "stratum+tcp://stratum.slushpool.com:3333"
 
 o = s:option(Value, "user", translate("User"))
 o.datatype = "string"
+o.optional = false
+o.rmempty = false
+o.placeholder = "eg. user.worker1"
 
-o = s:option(Value, "password", translate("Password"))
+o = s:option(Value, "pass", translate("Password"))
 o.datatype = "string"
+o.placeholder = "usually not required"
 
 s = m:section(TypedSection, "miner", translate("Miner"),
 	translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))

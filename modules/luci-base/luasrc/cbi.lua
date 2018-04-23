@@ -296,6 +296,16 @@ Map = class(Node)
 function Map.__init__(self, config, ...)
 	Node.__init__(self, ...)
 
+	self.uci = uci.cursor()
+	self.custom_uci = false
+	-- there seems to be no "simple" way to pass extra arguments
+	if type(config) == 'table' then
+		if config.uci then
+			self.uci = config.uci
+			self.custom_uci = true
+		end
+		config = assert(config.name)
+	end
 	self.config = config
 	self.parsechain = {self.config}
 	self.template = "cbi/map"
@@ -304,18 +314,19 @@ function Map.__init__(self, config, ...)
 	self.proceed = false
 	self.flow = {}
 
-	self.uci = uci.cursor()
 	self.save = true
 
 	self.changed = false
 
-	local path = "%s/%s" %{ self.uci:get_confdir(), self.config }
-	if fs.stat(path, "type") ~= "reg" then
-		fs.writefile(path, "")
+	if not self.custom_uci then
+		local path = "%s/%s" %{ self.uci:get_confdir(), self.config }
+		if fs.stat(path, "type") ~= "reg" then
+			fs.writefile(path, "")
+		end
 	end
 
 	local ok, err = self.uci:load(self.config)
-	if not ok then
+	if not ok and not self.custom_uci then
 		local url = dispatcher.build_url(unpack(dispatcher.context.request))
 		local source = self:formvalue("cbi.source")
 		if type(source) == "string" then
