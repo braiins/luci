@@ -264,7 +264,8 @@ o.default = DEFAULT_VOLTAGE
 
 o = s:option(StaticList, "chains", translate("Enabled Chains"))
 o.widget = "checkbox"
-o.rmempty = true
+o.rmempty = false
+o.optional = false
 for i=0,5 do
 	o:value(i)
 end
