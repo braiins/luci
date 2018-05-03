@@ -24,9 +24,26 @@ local DEFAULT_FREQUENCY = 1332
 local DEFAULT_VOLTAGE = 10
 local CGMINER_CONFIG = '/etc/cgminer.conf'
 
+--[[
+
+We fake UCI config store with our JSON-based implementation. However UCI
+clients expect all array-like entries to have unique "id" that is
+somewhat consistent in-between page reloads.
+
+The first attempt was to use the array index as ID, but that produced
+invalid references, because when an entry was deleted from middle of a
+table, the elements after it shifted.
+
+The second attempt stores id in the JSON, provided we can safely change
+te schema (and cgminer doesn't mind the extra keys in dictionary). The
+ids are either used from the JSON itself or generated on JSON load.
+
+]]
+
 local function fill_ids(t)
 	local used = {}
 	local max = 0
+	-- find maximum id in use
 	for i, v in ipairs(t) do
 		assert(type(v) == 'table')
 		if v._id then
@@ -37,6 +54,8 @@ local function fill_ids(t)
 			end
 		end
 	end
+	-- assign ids to elements that do not have one
+	-- start assigning from max+1
 	for i, v in ipairs(t) do
 		assert(type(v) == 'table')
 		if not v._id then
@@ -48,6 +67,12 @@ local function fill_ids(t)
 	end
 end
 
+--[[
+
+Lookup JSON table element by id
+
+]]
+
 local function get_by_id(t, id)
 	for i, v in ipairs(t) do
 		assert(type(t) == 'table')
@@ -58,6 +83,23 @@ local function get_by_id(t, id)
 	return nil
 end
 
+--[[
+
+Make element unique id as a composite of "array name" and "unique id".
+This name is generated when foreach is called on a cursor.
+
+]]
+
+local function make_sect_name(name, id)
+	return ('%s_%s'):format(name, id)
+end
+
+--[[
+
+Parse section name
+
+]]
+
 local function parse_sect_name(s)
 	local name, id = s:match('(%w+)%_(%w+)')
 	if name then
@@ -65,10 +107,6 @@ local function parse_sect_name(s)
 	else
 		return s
 	end
-end
-
-local function make_sect_name(name, id)
-	return ('%s_%s'):format(name, id)
 end
 
 
