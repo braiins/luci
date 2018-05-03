@@ -109,6 +109,14 @@ local function parse_sect_name(s)
 	end
 end
 
+--[[
+
+These handlers are for converting from JSON to LuCI representation (get) and
+back (set). The "id" argument is ignored for objects that are not of
+array-of-dictionaries type. The "keys" table is a list of keys for purpose of
+returning the whole dictionary and not just an element of it.
+
+]]
 
 local obj_handlers = {
 	pool = {
