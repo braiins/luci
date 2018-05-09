@@ -191,13 +191,15 @@ end
 function JsonUCICursor.unload(self, config)
 end
 
+local default_config = [[ { "pools" : [ { "url" : "stratum+tcp://dbg.stratum.slushpool.com:3336", "user" : "braiinstest.worker1", "pass" : "" } ], "api-allow" : "W:127.0.0.1", "api-listen" : true, "api-port" : "4028", "A1Pll1" : "1332", "A1Pll2" : "1332", "A1Pll3" : "1332", "A1Pll4" : "1332", "A1Pll5" : "1332", "A1Pll6" : "1332", "A1Vol" : "10", "enabled-chains" : "0,1,2" } ]] 
+
 function JsonUCICursor.load(self, config)
 	local str = nixio.fs.readfile(CGMINER_CONFIG) or ""
 	self.json = luci.jsonc.parse(str)
-	assert(self.json)
-	assert(type(self.json) == 'table')
-	assert(self.json.pools)
-	assert(type(self.json.pools) == 'table')
+	if not self.json or type(self.json) ~= 'table' or not self.json.pools or type(self.json.pools) ~= 'table' then
+		self.json = luci.jsonc.parse(default_config)
+		self:save(config)
+	end
 	return true
 end
 
@@ -258,14 +260,6 @@ local config = {
 	name = "cgminer",
 	uci = JsonUCICursor(),
 }
-
-local ok, errno, errstr = nixio.fs.access(CGMINER_CONFIG, "r", "w")
-if not ok then
-	m = Map("cgminer", translate("CGMiner"), translate("Miner general configuration"))
-	s = m:section(SimpleSection, translate("Errors"))
-	s.error = { { ('Cannot access %s: %s'):format(CGMINER_CONFIG, errstr) } }
-	return m
-end
 
 m = Map(config, translate("CGMiner"), translate("Miner general configuration"))
 m.on_after_commit = function() luci.sys.call("/etc/init.d/cgminer reload") end
