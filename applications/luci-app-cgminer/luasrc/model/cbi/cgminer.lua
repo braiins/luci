@@ -191,14 +191,11 @@ end
 function JsonUCICursor.unload(self, config)
 end
 
-local default_config = [[ { "pools" : [ { "url" : "stratum+tcp://dbg.stratum.slushpool.com:3336", "user" : "braiinstest.worker1", "pass" : "" } ], "api-allow" : "W:127.0.0.1", "api-listen" : true, "api-port" : "4028", "A1Pll1" : "1332", "A1Pll2" : "1332", "A1Pll3" : "1332", "A1Pll4" : "1332", "A1Pll5" : "1332", "A1Pll6" : "1332", "A1Vol" : "10", "enabled-chains" : "0,1,2" } ]] 
-
 function JsonUCICursor.load(self, config)
 	local str = nixio.fs.readfile(CGMINER_CONFIG) or ""
 	self.json = luci.jsonc.parse(str)
 	if not self.json or type(self.json) ~= 'table' or not self.json.pools or type(self.json.pools) ~= 'table' then
-		self.json = luci.jsonc.parse(default_config)
-		self:save(config)
+		error("default configuration not available, create "..CGMINER_CONFIG)
 	end
 	return true
 end
