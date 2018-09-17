@@ -24,6 +24,8 @@ local DEFAULT_FREQUENCY = 1332
 local DEFAULT_VOLTAGE = 10
 local CGMINER_CONFIG = '/etc/cgminer.conf'
 
+local DEFAULT_FREQUENCY_S9 = 650
+
 --[[
 
 We fake UCI config store with our JSON-based implementation. However UCI
@@ -152,6 +154,8 @@ local obj_handlers = {
 		get = function (json, id, key)
 			if key == 'frequency' then
 				return json.A1Pll1
+			elseif key == 'frequency_s9' then
+				return json['bitmain-freq']
 			elseif key == 'voltage' then
 				return json.A1Vol
 			elseif key == 'chains' then
@@ -163,6 +167,8 @@ local obj_handlers = {
 				for i = 1, 6 do
 					json[('A1Pll%d'):format(i)] = val
 				end
+			elseif key == 'frequency_s9' then
+				json['bitmain-freq'] = tostring(val)
 			elseif key == 'voltage' then
 				json.A1Vol = val
 			elseif key == 'chains' then
@@ -287,35 +293,50 @@ s = m:section(TypedSection, "miner", translate("Miner"),
 s.anonymous = true
 s.addremove = false
 
-o = s:option(Value, "frequency", translate("Frequency (MHz)"),
-	translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
-o.datatype = "range(120,1332)"
-o.placeholder = DEFAULT_FREQUENCY
-o.default = DEFAULT_FREQUENCY
-
-o = s:option(Value, "voltage", translate("Voltage (Level)"),
-	translate("The lower VID value means the higher voltage and higher power consumption."))
-o.datatype = "range(10,15)"
-o.placeholder = DEFAULT_VOLTAGE
-o.default = DEFAULT_VOLTAGE
-
-o = s:option(StaticList, "chains", translate("Enabled Chains"))
-o.widget = "checkbox"
-o.rmempty = false
-o.optional = false
-for i=0,5 do
-	o:value(i)
+local miner_model
+do
+	local f = io.open('/tmp/sysinfo/board_name', 'r')
+	assert(f)
+	miner_model = f:read('*l')
+	f:close()
 end
+if miner_model == 'am1-s9' then
+	o = s:option(Value, "frequency_s9", translate("Frequency (MHz)"),
+		translate("If you want to try overclock frequency, change this value."))
+	o.datatype = "range(100,1175)"
+	o.placeholder = DEFAULT_FREQUENCY_S9
+	o.default = DEFAULT_FREQUENCY_S9
+else
+	o = s:option(Value, "frequency", translate("Frequency (MHz)"),
+		translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
+	o.datatype = "range(120,1332)"
+	o.placeholder = DEFAULT_FREQUENCY
+	o.default = DEFAULT_FREQUENCY
 
-o = s:option(DummyValue, "hashrate", translate("Theoretical Hashrate"))
-function o.cfgvalue(self,section)
-  local CHIPS_PER_CHAIN = 63
-  local CORES_PER_CHIP = 32
-  local frequency = m:get(section, "frequency") or DEFAULT_FREQUENCY
-  local chains = m:get(section, "chains")
-  -- get number of enabled chains
-  chains = (chains and table.getn(chains)) or 0
-  return (frequency * 10^6 * 2 * CHIPS_PER_CHAIN * CORES_PER_CHIP * chains) / 10^12 .. " Th/s"
+	o = s:option(Value, "voltage", translate("Voltage (Level)"),
+		translate("The lower VID value means the higher voltage and higher power consumption."))
+	o.datatype = "range(10,15)"
+	o.placeholder = DEFAULT_VOLTAGE
+	o.default = DEFAULT_VOLTAGE
+
+	o = s:option(StaticList, "chains", translate("Enabled Chains"))
+	o.widget = "checkbox"
+	o.rmempty = false
+	o.optional = false
+	for i=0,5 do
+		o:value(i)
+	end
+
+	o = s:option(DummyValue, "hashrate", translate("Theoretical Hashrate"))
+	function o.cfgvalue(self,section)
+	  local CHIPS_PER_CHAIN = 63
+	  local CORES_PER_CHIP = 32
+	  local frequency = m:get(section, "frequency") or DEFAULT_FREQUENCY
+	  local chains = m:get(section, "chains")
+	  -- get number of enabled chains
+	  chains = (chains and table.getn(chains)) or 0
+	  return (frequency * 10^6 * 2 * CHIPS_PER_CHAIN * CORES_PER_CHIP * chains) / 10^12 .. " Th/s"
+	end
 end
 
 return m
