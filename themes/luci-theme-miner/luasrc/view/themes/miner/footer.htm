@@ -14,7 +14,7 @@
 	local categories = disp.node_childs(tree)
 %>
    <footer>
-    Powered by <a href="https://github.com/openwrt/luci"><%= ver.luciname %> (<%= ver.luciversion %>)</a> and <a href="http://www.braiins.cz/">braiins OS</a> for <a href="https://slushpool.com/">slushpool.com</a> / <%= ver.distversion %>
+    Powered by <a href="https://github.com/openwrt/luci"><%= ver.luciname %> (<%= ver.luciversion %>)</a> and <a href="https://braiins-os.org/">braiins OS</a> for <a href="https://slushpool.com/">slushpool.com</a> / <%= ver.distversion %>
     <% if #categories > 1 then %>
      <ul class="breadcrumb pull-right" id="modemenu">
 	    <% for i, r in ipairs(categories) do %>
