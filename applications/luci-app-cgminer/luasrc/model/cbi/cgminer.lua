@@ -25,6 +25,7 @@ local DEFAULT_VOLTAGE = 10
 local CGMINER_CONFIG = '/etc/cgminer.conf'
 
 local DEFAULT_FREQUENCY_S9 = 650
+local DEFAULT_VOLTAGE_S9 = 8.8
 
 --[[
 
@@ -156,6 +157,8 @@ local obj_handlers = {
 				return json.A1Pll1
 			elseif key == 'frequency_s9' then
 				return json['bitmain-freq']
+			elseif key == 'voltage_s9' then
+				return json['bitmain-voltage']
 			elseif key == 'voltage' then
 				return json.A1Vol
 			elseif key == 'chains' then
@@ -169,6 +172,8 @@ local obj_handlers = {
 				end
 			elseif key == 'frequency_s9' then
 				json['bitmain-freq'] = tostring(val)
+			elseif key == 'voltage_s9' then
+				json['bitmain-voltage'] = tostring(val)
 			elseif key == 'voltage' then
 				json.A1Vol = val
 			elseif key == 'chains' then
@@ -176,7 +181,7 @@ local obj_handlers = {
 				json['enabled-chains'] = table.concat(val, ',')
 			end
 		end,
-		keys = { 'frequency', 'voltage', 'chains' }
+		keys = { 'frequency', 'voltage', 'chains', }
 	}
 }
 
@@ -259,6 +264,26 @@ function JsonUCICursor.get_all(self, config, section)
 	return t
 end
 
+function getFixedFreqVoltageValue(freq)
+	local vol_value = 0
+	freq = tonumber(freq)
+	if freq>=675 then   -- hashrate 14500
+		vol_value=870;
+	elseif freq>=650 then  -- hashrate 14000
+		vol_value=880;
+	elseif freq>=631 then  -- hashrate 13500
+		vol_value=900;
+	elseif freq>=606 then  -- hashrate 13000
+		vol_value=910;
+	elseif freq>=581 then  -- hashrate 12500
+		vol_value=930;
+	else
+		vol_value=940;
+	end
+	return vol_value/100
+end
+
+
 local config = {
 	name = "cgminer",
 	uci = JsonUCICursor(),
@@ -306,6 +331,18 @@ if miner_model == 'am1-s9' then
 	o.datatype = "range(100,1175)"
 	o.placeholder = DEFAULT_FREQUENCY_S9
 	o.default = DEFAULT_FREQUENCY_S9
+
+	o = s:option(Value, "voltage_s9", translate("Voltage (Volts)"),
+		translate("The higher the voltage the higher the power consumption."))
+	o.datatype = "range(7.9,9.4)"
+	o.placeholder = DEFAULT_VOLTAGE_S9
+	o.default = DEFAULT_VOLTAGE_S9
+
+	o = s:option(DummyValue, "recommended_voltage", translate("&nbsp;"))
+	function o.cfgvalue(self, section)
+	  local freq = m:get(section, "frequency_s9") or DEFAULT_FREQUENCY_S9
+	  return ("Recommended voltage for frequency %d MHz is %.2fV"):format(freq, getFixedFreqVoltageValue(freq))
+	end
 else
 	o = s:option(Value, "frequency", translate("Frequency (MHz)"),
 		translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
