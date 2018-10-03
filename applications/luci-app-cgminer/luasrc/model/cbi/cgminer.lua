@@ -159,6 +159,8 @@ local obj_handlers = {
 				return json['bitmain-freq']
 			elseif key == 'voltage_s9' then
 				return json['bitmain-voltage']
+			elseif key == 'voltage_override_s9' then
+				return json['bitmain-voltage-override']
 			elseif key == 'voltage' then
 				return json.A1Vol
 			elseif key == 'chains' then
@@ -174,6 +176,8 @@ local obj_handlers = {
 				json['bitmain-freq'] = tostring(val)
 			elseif key == 'voltage_s9' then
 				json['bitmain-voltage'] = tostring(val)
+			elseif key == 'voltage_override_s9' then
+				json['bitmain-voltage-override'] = tostring(val)
 			elseif key == 'voltage' then
 				json.A1Vol = val
 			elseif key == 'chains' then
@@ -181,7 +185,7 @@ local obj_handlers = {
 				json['enabled-chains'] = table.concat(val, ',')
 			end
 		end,
-		keys = { 'frequency', 'voltage', 'chains', }
+		keys = { 'frequency', 'voltage', 'chains', 'voltage_s9', 'voltage_override_s9' }
 	}
 }
 
@@ -189,6 +193,18 @@ local function get_handler(s)
 	local name, id = parse_sect_name(s)
 	if not name then return nil end
 	return obj_handlers[name], id, name
+end
+
+local function save_fixup(json)
+	if json['bitmain-voltage-override'] ~= '1' then
+		json['bitmain-voltage'] = nil
+	end
+	json['bitmain-voltage-override'] = nil
+end
+
+local function load_fixup(json)
+	local vol = tonumber(json['bitmain-voltage'])
+	json['bitmain-voltage-override'] = (vol and vol > 0) and '1' or '0'
 end
 
 JsonUCICursor = class()
@@ -208,11 +224,14 @@ function JsonUCICursor.load(self, config)
 	if not self.json or type(self.json) ~= 'table' or not self.json.pools or type(self.json.pools) ~= 'table' then
 		error("default configuration not available, create "..CGMINER_CONFIG)
 	end
+	load_fixup(self.json)
 	return true
 end
 
 function JsonUCICursor.save(self, config)
+	save_fixup(self.json)
 	nixio.fs.writefile(CGMINER_CONFIG, luci.jsonc.stringify(self.json))
+	load_fixup(self.json)
 end
 
 function JsonUCICursor.foreach(self, config, sectiontype, fn)
@@ -325,6 +344,7 @@ do
 	miner_model = f:read('*l')
 	f:close()
 end
+
 if miner_model == 'am1-s9' then
 	o = s:option(Value, "frequency_s9", translate("Frequency (MHz)"),
 		translate("If you want to try overclock frequency, change this value."))
@@ -332,13 +352,17 @@ if miner_model == 'am1-s9' then
 	o.placeholder = DEFAULT_FREQUENCY_S9
 	o.default = DEFAULT_FREQUENCY_S9
 
+	o = s:option(Flag, "voltage_override_s9", translate("Override voltage"))
+
 	o = s:option(Value, "voltage_s9", translate("Voltage (Volts)"),
 		translate("The higher the voltage the higher the power consumption."))
+	o:depends("voltage_override_s9", "1")
 	o.datatype = "range(7.9,9.4)"
 	o.placeholder = DEFAULT_VOLTAGE_S9
 	o.default = DEFAULT_VOLTAGE_S9
 
 	o = s:option(DummyValue, "recommended_voltage", translate("&nbsp;"))
+	o:depends("voltage_override_s9", "1")
 	function o.cfgvalue(self, section)
 	  local freq = m:get(section, "frequency_s9") or DEFAULT_FREQUENCY_S9
 	  return ("Recommended voltage for frequency %d MHz is %.2fV"):format(freq, getFixedFreqVoltageValue(freq))
