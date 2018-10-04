@@ -21,4 +21,5 @@ end
 
 luciname    = "${3:-LuCI}"
 luciversion = "${2:-Git}"
+fwversion   = "${4:-Unknown}"
 EOF
