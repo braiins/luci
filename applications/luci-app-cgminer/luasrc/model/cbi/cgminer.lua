@@ -27,6 +27,15 @@ local CGMINER_CONFIG = '/etc/cgminer.conf'
 local DEFAULT_FREQUENCY_S9 = 650
 local DEFAULT_VOLTAGE_S9 = 8.8
 
+local MINER_MODEL
+do
+	local f = io.open('/tmp/sysinfo/board_name', 'r')
+	assert(f)
+	MINER_MODEL = f:read('*l')
+	f:close()
+end
+
+
 --[[
 
 We fake UCI config store with our JSON-based implementation. However UCI
@@ -155,12 +164,6 @@ local obj_handlers = {
 		get = function (json, id, key)
 			if key == 'frequency' then
 				return json.A1Pll1
-			elseif key == 'frequency_s9' then
-				return json['bitmain-freq']
-			elseif key == 'voltage_s9' then
-				return json['bitmain-voltage']
-			elseif key == 'voltage_override_s9' then
-				return json['bitmain-voltage-override']
 			elseif key == 'voltage' then
 				return json.A1Vol
 			elseif key == 'chains' then
@@ -172,12 +175,6 @@ local obj_handlers = {
 				for i = 1, 6 do
 					json[('A1Pll%d'):format(i)] = val
 				end
-			elseif key == 'frequency_s9' then
-				json['bitmain-freq'] = tostring(val)
-			elseif key == 'voltage_s9' then
-				json['bitmain-voltage'] = tostring(val)
-			elseif key == 'voltage_override_s9' then
-				json['bitmain-voltage-override'] = tostring(val)
 			elseif key == 'voltage' then
 				json.A1Vol = val
 			elseif key == 'chains' then
@@ -185,8 +182,20 @@ local obj_handlers = {
 				json['enabled-chains'] = table.concat(val, ',')
 			end
 		end,
-		keys = { 'frequency', 'voltage', 'chains', 'voltage_s9', 'voltage_override_s9' }
-	}
+
+		keys = { 'frequency', 'voltage', 'chains', }
+	},
+	miners9 = {
+		get = function (json, id, key)
+			local m = assert(json.miners9[tonumber(id)])
+			return m[key]
+		end,
+		set = function (json, id, key, val)
+			local m = assert(json.miners9[tonumber(id)])
+			m[key] = val
+		end,
+		keys = { 'frequency', 'voltage', 'frequency-override', 'voltage-override' },
+	},
 }
 
 local function get_handler(s)
@@ -196,15 +205,34 @@ local function get_handler(s)
 end
 
 local function save_fixup(json)
-	if json['bitmain-voltage-override'] ~= '1' then
-		json['bitmain-voltage'] = nil
+	local volt_list = {}
+	local freq_list = {}
+	for i = 1, 6 do
+		local chain = json.miners9[i]
+		volt_list[i] = chain.voltage_override == '1' and chain.voltage or ''
+		freq_list[i] = chain.frequency_override == '1' and chain.frequency or ''
 	end
-	json['bitmain-voltage-override'] = nil
+	json.miners9 = nil
+	json['bitmain-voltage'] = table.concat(volt_list, ',')
+	json['bitmain-freq'] = table.concat(freq_list, ',')
 end
 
 local function load_fixup(json)
-	local vol = tonumber(json['bitmain-voltage'])
-	json['bitmain-voltage-override'] = (vol and vol > 0) and '1' or '0'
+	local volt_list = luci.util.split(json['bitmain-voltage'] or '', ',')
+	local freq_list = luci.util.split(json['bitmain-freq'] or '', ',')
+	local t = {}
+
+	for i = 1, 6 do
+		local f = freq_list[#freq_list == 1 and 1 or i]
+		local v = volt_list[#volt_list == 1 and 1 or i]
+		t[i] = {
+			frequency = f,
+			frequency_override = f and f ~= '' and '1' or '0',
+			voltage = v,
+			voltage_override =  v and v ~= '' and '1' or '0',
+		}
+	end
+	json.miners9 = t
 end
 
 JsonUCICursor = class()
@@ -239,6 +267,10 @@ function JsonUCICursor.foreach(self, config, sectiontype, fn)
 		fill_ids(self.json.pools)
 		for i, pool in ipairs(self.json.pools) do
 			fn{ ['.name'] = make_sect_name('pool', pool._id) }
+		end
+	elseif sectiontype == 'miners9' then
+		for i = 1, 6 do
+			fn{ ['.name'] = make_sect_name('miners9', i) }
 		end
 	elseif sectiontype == 'miner' then
 		fn{ ['.name'] = 'miner' }
@@ -332,42 +364,45 @@ o = s:option(Value, "pass", translate("Password"))
 o.datatype = "string"
 o.placeholder = "usually not required"
 
-s = m:section(TypedSection, "miner", translate("Miner"),
-	translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
-s.anonymous = true
-s.addremove = false
+if MINER_MODEL == 'am1-s9' then
+	s = m:section(TypedSection, "miners9", translate("Miner"),
+		translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
+	s.anonymous = false
+	s.addremove = false
+	s.template = "cbi/tblsection"
+	function s:sectiontitle(section)
+		local handler, id = get_handler(section)
+		return ('Chain %d'):format(id)
+	end
 
-local miner_model
-do
-	local f = io.open('/tmp/sysinfo/board_name', 'r')
-	assert(f)
-	miner_model = f:read('*l')
-	f:close()
-end
+	o = s:option(Flag, "frequency_override", translate(""))
 
-if miner_model == 'am1-s9' then
-	o = s:option(Value, "frequency_s9", translate("Frequency (MHz)"),
-		translate("If you want to try overclock frequency, change this value."))
+	o = s:option(Value, "frequency", translate("Frequency (MHz)"))
+	o:depends("frequency_override", "1")
 	o.datatype = "range(100,1175)"
 	o.placeholder = DEFAULT_FREQUENCY_S9
 	o.default = DEFAULT_FREQUENCY_S9
 
-	o = s:option(Flag, "voltage_override_s9", translate("Override voltage"))
+	o = s:option(Flag, "voltage_override", translate(""))
 
-	o = s:option(Value, "voltage_s9", translate("Voltage (Volts)"),
-		translate("The higher the voltage the higher the power consumption."))
-	o:depends("voltage_override_s9", "1")
+	o = s:option(Value, "voltage", translate("Voltage (Volts)"))
+	o:depends("voltage_override", "1")
 	o.datatype = "range(7.9,9.4)"
 	o.placeholder = DEFAULT_VOLTAGE_S9
 	o.default = DEFAULT_VOLTAGE_S9
 
-	o = s:option(DummyValue, "recommended_voltage", translate("&nbsp;"))
-	o:depends("voltage_override_s9", "1")
+	o = s:option(DummyValue, "recommended_voltage", translate("Recommended voltage"))
 	function o.cfgvalue(self, section)
-	  local freq = m:get(section, "frequency_s9") or DEFAULT_FREQUENCY_S9
-	  return ("Recommended voltage for frequency %d MHz is %.2fV"):format(freq, getFixedFreqVoltageValue(freq))
+		local freq = m:get(section, "frequency")
+		if not freq or freq == '' then freq = DEFAULT_FREQUENCY_S9 end
+		return ("%.2fV (for %d MHz)"):format(getFixedFreqVoltageValue(freq), freq)
 	end
 else
+	s = m:section(TypedSection, "miner", translate("Miner"),
+		translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
+	s.anonymous = true
+	s.addremove = false
+
 	o = s:option(Value, "frequency", translate("Frequency (MHz)"),
 		translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
 	o.datatype = "range(120,1332)"

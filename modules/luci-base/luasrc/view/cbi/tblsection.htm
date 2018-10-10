@@ -79,6 +79,8 @@ end
 				<%-
 					for k, node in ipairs(self.children) do
 						if not node.optional then
+							node.last_child = (k == #self.children)
+							node.index = k
 							node:render(section, scope or {})
 						end
 					end
