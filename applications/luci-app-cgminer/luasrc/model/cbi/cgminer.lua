@@ -160,6 +160,20 @@ local obj_handlers = {
 		end,
 		keys = { 'url', 'user', 'pass' }
 	},
+	miners9 = {
+		get = function (json, id, key)
+			if key == 'asicboost' then
+				return (tonumber(json['multi-version']) or 1) > 1 and '1' or '0'
+			end
+			return json[key] or ''
+		end,
+		set = function (json, id, key, val)
+			if key == 'asicboost' then
+				json['multi-version'] = val == '1' and '4' or '1'
+			end
+		end,
+		keys = { 'asicboost', },
+	},
 	miner = {
 		get = function (json, id, key)
 			if key == 'frequency' then
@@ -185,13 +199,13 @@ local obj_handlers = {
 
 		keys = { 'frequency', 'voltage', 'chains', }
 	},
-	miners9 = {
+	chainconfigs9 = {
 		get = function (json, id, key)
-			local m = assert(json.miners9[tonumber(id)])
+			local m = assert(json.chainconfigs9[tonumber(id)])
 			return m[key]
 		end,
 		set = function (json, id, key, val)
-			local m = assert(json.miners9[tonumber(id)])
+			local m = assert(json.chainconfigs9[tonumber(id)])
 			m[key] = val
 		end,
 		keys = { 'frequency', 'voltage', 'frequency-override', 'voltage-override' },
@@ -208,11 +222,11 @@ local function save_fixup(json)
 	local volt_list = {}
 	local freq_list = {}
 	for i = 1, 6 do
-		local chain = json.miners9[i]
+		local chain = json.chainconfigs9[i]
 		volt_list[i] = chain.voltage_override == '1' and chain.voltage or ''
 		freq_list[i] = chain.frequency_override == '1' and chain.frequency or ''
 	end
-	json.miners9 = nil
+	json.chainconfigs9 = nil
 	json['bitmain-voltage'] = table.concat(volt_list, ',')
 	json['bitmain-freq'] = table.concat(freq_list, ',')
 end
@@ -232,7 +246,7 @@ local function load_fixup(json)
 			voltage_override =  v and v ~= '' and '1' or '0',
 		}
 	end
-	json.miners9 = t
+	json.chainconfigs9 = t
 end
 
 JsonUCICursor = class()
@@ -268,12 +282,14 @@ function JsonUCICursor.foreach(self, config, sectiontype, fn)
 		for i, pool in ipairs(self.json.pools) do
 			fn{ ['.name'] = make_sect_name('pool', pool._id) }
 		end
-	elseif sectiontype == 'miners9' then
+	elseif sectiontype == 'chainconfigs9' then
 		for i = 1, 6 do
-			fn{ ['.name'] = make_sect_name('miners9', i) }
+			fn{ ['.name'] = make_sect_name('chainconfigs9', i) }
 		end
 	elseif sectiontype == 'miner' then
 		fn{ ['.name'] = 'miner' }
+	elseif sectiontype == 'miners9' then
+		fn{ ['.name'] = 'miners9' }
 	end
 end
 
@@ -366,6 +382,13 @@ o.placeholder = "usually not required"
 
 if MINER_MODEL == 'am1-s9' then
 	s = m:section(TypedSection, "miners9", translate("Miner"),
+		translate("General miner configuration"))
+	s.anonymous = true
+	s.addremove = false
+
+	o = s:option(Flag, "asicboost", translate("ASIC Boost Enable"))
+
+	s = m:section(TypedSection, "chainconfigs9", translate("Chain Configuration"),
 		translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
 	s.anonymous = false
 	s.addremove = false
