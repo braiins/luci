@@ -34,7 +34,15 @@ do
 	MINER_MODEL = f:read('*l')
 	f:close()
 end
+local IS_AM1_MINER = MINER_MODEL == 'am1-s9'
+-- TODO: lookup what string does T1 miner USE
+local IS_T1_MINER = not IS_AM1_MINER
 
+local function copy_table_into_table(dest, source)
+	for k, v in pairs(source) do
+		dest[k] = v
+	end
+end
 
 --[[
 
@@ -160,6 +168,8 @@ local obj_handlers = {
 		end,
 		keys = { 'url', 'user', 'pass' }
 	},
+}
+local am1_handlers = {
 	miners9 = {
 		get = function (json, id, key)
 			if key == 'asicboost' then
@@ -174,6 +184,48 @@ local obj_handlers = {
 		end,
 		keys = { 'asicboost', },
 	},
+	chainconfigs9 = {
+		get = function (json, id, key)
+			local m = assert(json.chainconfigs9[tonumber(id)])
+			return m[key]
+		end,
+		set = function (json, id, key, val)
+			local m = assert(json.chainconfigs9[tonumber(id)])
+			m[key] = val
+		end,
+		keys = { 'frequency', 'voltage', 'frequency-override', 'voltage-override' },
+		load_fixup = function (json)
+			local volt_list = luci.util.split(json['bitmain-voltage'] or '', ',')
+			local freq_list = luci.util.split(json['bitmain-freq'] or '', ',')
+			local t = {}
+
+			for i = 1, 6 do
+				local f = freq_list[#freq_list == 1 and 1 or i]
+				local v = volt_list[#volt_list == 1 and 1 or i]
+				t[i] = {
+					frequency = f,
+					frequency_override = f and f ~= '' and '1' or '0',
+					voltage = v,
+					voltage_override =  v and v ~= '' and '1' or '0',
+				}
+			end
+			json.chainconfigs9 = t
+		end,
+		save_fixup = function (json)
+			local volt_list = {}
+			local freq_list = {}
+			for i = 1, 6 do
+				local chain = json.chainconfigs9[i]
+				volt_list[i] = chain.voltage_override == '1' and chain.voltage or ''
+				freq_list[i] = chain.frequency_override == '1' and chain.frequency or ''
+			end
+			json.chainconfigs9 = nil
+			json['bitmain-voltage'] = table.concat(volt_list, ',')
+			json['bitmain-freq'] = table.concat(freq_list, ',')
+		end,
+	},
+}
+local t1_handlers = {
 	miner = {
 		get = function (json, id, key)
 			if key == 'frequency' then
@@ -196,57 +248,35 @@ local obj_handlers = {
 				json['enabled-chains'] = table.concat(val, ',')
 			end
 		end,
-
 		keys = { 'frequency', 'voltage', 'chains', }
 	},
-	chainconfigs9 = {
-		get = function (json, id, key)
-			local m = assert(json.chainconfigs9[tonumber(id)])
-			return m[key]
-		end,
-		set = function (json, id, key, val)
-			local m = assert(json.chainconfigs9[tonumber(id)])
-			m[key] = val
-		end,
-		keys = { 'frequency', 'voltage', 'frequency-override', 'voltage-override' },
-	},
 }
+
+if IS_AM1_MINER then
+	copy_table_into_table(obj_handlers, am1_handlers)
+elseif IS_T1_MINER then
+	copy_table_into_table(obj_handlers, t1_handlers)
+end
+
 
 local function get_handler(s)
 	local name, id = parse_sect_name(s)
 	if not name then return nil end
 	return obj_handlers[name], id, name
 end
-
-local function save_fixup(json)
-	local volt_list = {}
-	local freq_list = {}
-	for i = 1, 6 do
-		local chain = json.chainconfigs9[i]
-		volt_list[i] = chain.voltage_override == '1' and chain.voltage or ''
-		freq_list[i] = chain.frequency_override == '1' and chain.frequency or ''
-	end
-	json.chainconfigs9 = nil
-	json['bitmain-voltage'] = table.concat(volt_list, ',')
-	json['bitmain-freq'] = table.concat(freq_list, ',')
-end
-
 local function load_fixup(json)
-	local volt_list = luci.util.split(json['bitmain-voltage'] or '', ',')
-	local freq_list = luci.util.split(json['bitmain-freq'] or '', ',')
-	local t = {}
-
-	for i = 1, 6 do
-		local f = freq_list[#freq_list == 1 and 1 or i]
-		local v = volt_list[#volt_list == 1 and 1 or i]
-		t[i] = {
-			frequency = f,
-			frequency_override = f and f ~= '' and '1' or '0',
-			voltage = v,
-			voltage_override =  v and v ~= '' and '1' or '0',
-		}
+	for _, s in pairs(obj_handlers) do
+		if s.load_fixup then
+			s.load_fixup(json)
+		end
 	end
-	json.chainconfigs9 = t
+end
+local function save_fixup(json)
+	for _, s in pairs(obj_handlers) do
+		if s.save_fixup then
+			s.save_fixup(json)
+		end
+	end
 end
 
 JsonUCICursor = class()
@@ -380,7 +410,7 @@ o = s:option(Value, "pass", translate("Password"))
 o.datatype = "string"
 o.placeholder = "usually not required"
 
-if MINER_MODEL == 'am1-s9' then
+if IS_AM1_MINER then
 	s = m:section(TypedSection, "miners9", translate("Miner"),
 		translate("General miner configuration"))
 	s.anonymous = true
@@ -420,7 +450,7 @@ if MINER_MODEL == 'am1-s9' then
 		if not freq or freq == '' then freq = DEFAULT_FREQUENCY_S9 end
 		return ("%.2fV (for %d MHz)"):format(getFixedFreqVoltageValue(freq), freq)
 	end
-else
+elseif IS_T1_MINER then
 	s = m:section(TypedSection, "miner", translate("Miner"),
 		translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
 	s.anonymous = true
