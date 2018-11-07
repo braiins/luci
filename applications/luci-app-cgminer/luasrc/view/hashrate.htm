@@ -5,338 +5,872 @@
 
 <%+header%>
 
-<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript" src="<%=resource%>/cbi.js?v=git-18.296.46953-d87b0c8"></script>
+
+	<style>
+table.stats td { border: 1px solid black !important; padding: 4px; min-width: 5em; text-align: center; }
+table.stats th { text-align: center; font-weight: bold; }
+a { text-decoration: none; }
+table.stats { width: auto; margin-top: 1em; } //margin-left: auto; margin-right: auto; }
+	</style>
+
+<h1>Miner Status<span id="what"</span></h1>
+<p>API connection status: <span id="status">Not connected</span></p>
+
+<embed id="hashrate-svg" style="width:100%; height:300px; border:1px solid #000000; background-color:#FFFFFF" src="/luci-static/resources/miner_hashrate.svg">
+
+<table class="stats" id="chains-table" />
+<table class="stats" id="pools-table" />
+<table class="stats" id="summary-table" />
+<table class="stats" id="fans-table" />
+<table />
+
 <script type="text/javascript">//<![CDATA[
 
-const VIEW_HASHRATES = 3;
-const VIEW_CHAINS = 6;
+/*
+ * "Constants"
+ */
 
-const CURRENT = "cur";
-const AVERAGE = "avg";
-const PEAK = "peak";
+/* must match SVG */
+var MAX_GRAPHS = 3;
+var PAGE_TICK_DURATION_MS = 1000;
+var PAGE_DEAD_TIMEOUT_MS = 5000;
+var API_PORT = 4028;
+/* draw last ... seconds of history */
+var DRAW_HISTORY_SEC = 5 * 60;
+var SAMPLING_FREQ = 1 / (PAGE_TICK_DURATION_MS / 1000);
+var KEEP_HISTORY_SEC = DRAW_HISTORY_SEC * 1.2;
 
-const HASHRATE_SUFFIX = [ CURRENT, AVERAGE, PEAK ];
 
-var G;
+/*
+ * Utility functions
+ */
 
-var label_25;
-var label_50;
-var label_75;
+function mod0(x, y) {
+	return (x % y + y) % y;
+}
+function defaultNaN(x, def) {
+	return isNaN(x) ? def : x;
+}
+function minNaN(x, y) {
+	if (isNaN(x))
+		return y;
+	if (isNaN(y))
+		return x;
+	return Math.min(x, y);
+}
+function maxNaN(x, y) {
+	if (isNaN(x))
+		return y;
+	if (isNaN(y))
+		return x;
+	return Math.max(x, y);
+}
 
-var label_scale;
+function listMax(list) {
+	var max = list[0];
+	for (i in list) {
+		max = Math.max(max, list[i]);
+	}
+	return max;
+}
+function listSum(list) {
+	var sum = 0;
+	for (i in list) {
+		sum += list[i];
+	}
+	return sum;
+}
+function listAvg(list) {
+	var len = list.length;
+	if (len == 0)
+		return 0;
+	return listSum(list) / len;
+}
+function pickKey(list, key)
+{
+	var out = [];
+	for (x in list)
+		out.push(list[x][key]);
+	return out;
+}
+function range(a, b)
+{
+	var t = [];
+	for (var i = a; i < b; i++)
+		t.push(i);
+	return t;
+}
 
-var line_hashrate = [];
+/*
+ * Scheduler class (via closures)
+ */
 
-var label_hashrate = {};
-var label_chain = [];
-var label_accepted = [];
-var label_rejected = [];
+function Scheduler(callback, timeout)
+{
+	var run;
+	run = function () {
+		setTimeout(run, timeout);
+		callback();
+	};
+	return {
+		run: run
+	};
+}
 
-var sample_stamp = 0;
-var sample = [];
+/*
+ * Dataset class (via prototypes)
+ */
 
-/* wait for SVG */
-window.setTimeout(
-    function() {
-        var svg = document.getElementById('hashrate_svg');
+function Dataset(samplingFreq, secondsOfHistory)
+{
+	this.samplingFreq = samplingFreq;
+	/* At 2Hz sampling rate and 4 seconds you needs 2*4 = 8 samples */
+	this.totalSamples = secondsOfHistory * samplingFreq;
+	/* Data is "ring buffer" */
+	this.data = [];
+	/* "n" is pointer to ring buffer */
+	this.n = 0;
+	/* last sample to fill-in for missing samples */
+	this.last = 0;
+	this.resetCounter();
+}
 
+Dataset.prototype.resetCounter = function ()
+{
+	/* computed min/max/avg since last reset */
+	this.countMax = NaN;
+	this.countMin = NaN;
+	this.countAvgSum = 0;
+	this.countAvgN = 0;
+};
+
+Dataset.prototype.push = function (sample)
+{
+	this.data[this.n] = sample;
+	this.n += 1;
+	if (this.n >= this.totalSamples)
+		this.n = 0;
+	this.last = sample;
+	/* compute avg */
+	this.countAvgSum += sample;
+	this.countAvgN++;
+	this.countMin = minNaN(this.countMin, sample);
+	this.countMax = maxNaN(this.countMax, sample);
+};
+
+Dataset.prototype.pushLast = function ()
+{
+	this.push(this.last);
+};
+
+Dataset.prototype.getStatsStr = function ()
+{
+	if (this.countAvgN == 0)
+		return "not yet";
+	var avg = this.countAvgSum / this.countAvgN;
+	return 'Avg: ' + avg.toFixed(2) +
+		' Min: ' + this.countMin.toFixed(2) +
+		' Max: ' + this.countMax.toFixed(2)
+}
+
+Dataset.prototype.getBundle = function (nSeconds)
+{
+	var nSamples = this.samplingFreq * nSeconds;
+	var ret = [];
+	var first = true;
+	/*
+         * min and max gets overwritten in first iteration with some real
+         * value. the only case "NaN" is returned is when the returned
+         * dataSet is empty.
+         */
+	var max = NaN, min = NaN;
+	var len = this.totalSamples;
+	var start = mod0(this.n - nSamples, len);
+	var data = this.data;
+	var acc = 0;
+	for (var i = 0; i < nSamples; i++) {
+		var x = data[(start + i) % len];
+		if (!isNaN(x)) {
+			min = Math.min(first ? x : min, x);
+			max = Math.max(first ? x : max, x);
+			first = false;
+		} else {
+			x = 0;
+		}
+		ret[i] = x;
+	}
+	return {
+		data: ret,
+		max: max,
+		min: min,
+	};
+};
+
+
+/*
+ * Transcribe Bitmain API results to our format
+ */
+
+var fieldsRenameChain = {
+	'chain_rate': 'ratechip',
+	'chain_rateideal': 'rateideal',
+	'voltage': 'voltage',
+	'freq_avg': 'frequency',
+	'temp': 'temp1',
+	'temp2_': 'temp2',
+	'chain_acn': 'cores',
+	'chain_hw': 'hwerrors',
+	'chain_hwrate': 'hwerrorsrate',
+};
+var sumFields = {
+	//'ratechip': listSum,
+	'rateideal': listSum,
+	//'frequency': listAvg,
+	'temp1': listMax,
+	'temp2': listMax,
+	'cores': listSum,
+	'hwerrors': listSum,
+	'hwerrorsrate': listSum,
+};
+
+function transcribeApi(json)
+{
+	var outChains = [];
+	var outStats = [];
+	var outPools = [];
+
+	var reqSummary = json.summary[0].SUMMARY[0];
+
+	var reqPools = json.pools[0].POOLS;
+	for (var i in reqPools) {
+		/* TODO processing */
+		var reqPool = reqPools[i];
+		reqPool.id = parseFloat(i) + 1;
+		outPools.push(reqPool);
+	}
+
+	var reqStats = json.stats[0].STATS[1];
+	for (var i = 1; i <= 16; i++) {
+		var r = reqStats['chain_rate' + i];
+		if (typeof(r) == "string" && r != '') {
+			var outChain = {
+				id: i,
+			};
+			for (key in fieldsRenameChain) {
+				var as = fieldsRenameChain[key];
+				var val = reqStats[key + i];
+				outChain[as] = parseFloat(val);
+			}
+			outChains.push(outChain);
+		}
+	}
+	var outFans = [];
+	for (var i = 1; i <= 8; i++) {
+		var f = reqStats['fan' + i];
+		if (f && parseFloat(f) > 0) {
+			var outFan = { id: i, rpm: parseFloat(f) };
+			outFans.push(outFan);
+		}
+	}
+	var outSum = {
+		'ratereal': parseFloat(reqSummary['GHS av']),
+		'ratechip': parseFloat(reqStats['total_rate']),
+		'rateideal': parseFloat(reqStats['total_rateideal']),
+		'frequency': parseFloat(reqStats['total_freqavg']),
+	};
+	for (key in sumFields) {
+		outSum[key] = sumFields[key](pickKey(outChains, key));
+	};
+	outChains.push(outSum);
+	var out = {
+		stats: reqSummary,
+		pools: reqPools,
+		chains: outChains,
+		fans: outFans,
+	};
+	return out;
+}
+
+/*
+ * Build HTML tables
+ */
+
+function makeDataCell(kind, id, value, onclick, description)
+{
+	var node;
+
+	/* create text with description */
+	if (description) {
+		node = document.createElement('abbr');
+		node.title = description;
+	} else {
+		node = document.createElement('span');
+	}
+	/* does it have an id? */
+	if (id) {
+		node.id = id;
+	}
+	node.innerHTML = value;
+
+	/* make it clickable? */
+	if (onclick) {
+		var a = document.createElement('a');
+		a.href = "#";
+		a.onclick = onclick;
+		a.appendChild(node);
+		node = a;
+	}
+
+	/* wrap it into cell */
+	var col = document.createElement(kind);
+	col.appendChild(node);
+
+	return col;
+}
+
+function makeRow(cells)
+{
+	var row = document.createElement('tr');
+	for (var i in cells) {
+		row.appendChild(cells[i]);
+	}
+	return row;
+}
+
+function setId(name, value)
+{
+	//var id = name.replace(/\s/g, '_');
+	var e = document.getElementById(name);
+	e.innerHTML = value === undefined ? '-' : value;
+}
+
+function initGraph(state)
+{
+	//console.log('state', state.svgDoc, state.svg);
+	for (var k = 0; k < MAX_GRAPHS; ++k) {
+		state.line[k] = state.svgDoc.getElementById('hashrate' + (k + 1));
+	}
+	state.label_25 = state.svgDoc.getElementById('label_25');
+	state.label_50 = state.svgDoc.getElementById('label_50');
+	state.label_75 = state.svgDoc.getElementById('label_75');
+	state.graph_name = state.svgDoc.getElementById('graph_name');
+
+	var WIDTH = state.svg.offsetWidth - 2;
+	for (min = 1; min * 60 < DRAW_HISTORY_SEC; min++) {
+		var x = (1 - min * 60 / DRAW_HISTORY_SEC) * WIDTH;
+		var line = state.svgDoc.createElementNS('http://www.w3.org/2000/svg', 'line');
+		line.setAttribute('x1', x);
+		line.setAttribute('y1', 0);
+		line.setAttribute('x2', x);
+		line.setAttribute('y2', '100%');
+		line.setAttribute('style', 'stroke:black;stroke-width:0.1');
+
+		var text = state.svgDoc.createElementNS('http://www.w3.org/2000/svg', 'text');
+		text.setAttribute('x', x + 5);
+		text.setAttribute('y', 15);
+		text.setAttribute('style', 'fill:#999999; font-size:9pt');
+		text.appendChild(state.svgDoc.createTextNode(min + 'm'));
+
+		state.label_25.parentNode.appendChild(line);
+		state.label_25.parentNode.appendChild(text);
+	}
+}
+
+function drawGraphs(state, bundles)
+{
+	var WIDTH = state.svg.offsetWidth - 2;
+	var HEIGHT = state.svg.offsetHeight - 2;
+
+	//var min = NaN;
+	var min = 0;
+	var max = NaN;
+
+	for (var k = 0; k < MAX_GRAPHS; k++) {
+		var bundle = bundles[k];
+		if (bundle) {
+			min = minNaN(min, bundle.min);
+			max = maxNaN(max, bundle.max);
+		}
+	}
+	min = defaultNaN(min, 0) * 0.9;
+	max = defaultNaN(max, min + 1) * 1.1;
+
+	for (var k = 0; k < MAX_GRAPHS; k++) {
+		var bundle = bundles[k];
+		if (!bundle) {
+			state.line[k].style.visibility = 'hidden';
+			continue;
+		}
+		var data = bundle.data;
+		var len = data.length;
+		var h = Math.max(max - min, 1);
+		var points = '0,' + HEIGHT;
+		for (var i = 0; i < len; i++) {
+			var y = HEIGHT - Math.floor(HEIGHT * (data[i] - min) / h);
+			var x = i * WIDTH / (len - 1);
+			points += ' ' + x + ',' + y;
+		}
+		points += ' ' + WIDTH + ',' + HEIGHT;
+		state.line[k].setAttribute('points', points);
+		state.line[k].style.visibility = 'visible';
+	}
+
+	state.label_25.firstChild.data = (0.25 * (max - min)).toFixed(2);
+	state.label_50.firstChild.data = (0.50 * (max - min)).toFixed(2);
+	state.label_75.firstChild.data = (0.75 * (max - min)).toFixed(2);
+	state.graph_name.firstChild.data = state.graphAnnot;
+}
+
+/*
+ * Field description
+ */
+
+var fieldsSummary = [
+	{
+		key: 'Hashrate1m',
+		name: 'Gh/s 1m',
+		graph: true,
+		desc: 'Average hashrate, 1 minute window',
+		unit: 1e6,
+		format: function (x) { return x.toFixed(2); },
+	},
+	{
+		key: 'Hashrate15m',
+		name: 'Gh/s 15m',
+		graph: true,
+		desc: 'Average hashrate, 15 minute window',
+		unit: 1e6,
+		format: function (x) { return x.toFixed(2); },
+	},
+	{
+		key: 'Hashrate24h',
+		name: 'Gh/s 24h',
+		graph: true,
+		desc: 'Average hashrate, 24 hour window',
+		unit: 1e6,
+		format: function (x) { return x.toFixed(2); },
+	},
+	{
+		key: 'Found Blocks',
+		graph: true,
+	},
+	{
+		key: 'Accepted',
+		graph: true,
+	},
+	{
+		key: 'Rejected',
+		graph: true,
+	},
+	{
+		key: 'Hardware Errors',
+		name: 'HW err',
+		desc: 'Hardware Errors',
+		graph: true,
+	},
+	{
+		key: 'Work Utility',
+		graph: true,
+		format: function (x) { return x.toFixed(0); },
+	},
+];
+var fieldsPool = [
+	{
+		key: 'id',
+		name: 'Pool ID',
+	},
+	{
+		key: 'URL',
+	},
+	{
+		key: 'User',
+	},
+	{
+		key: 'Status',
+	},
+	{
+		key: 'Accepted',
+		graph: true,
+	},
+	{
+		key: 'Rejected',
+		graph: true,
+	},
+/*
+	{
+		key: 'Discarded',
+		graph: true,
+	},
+*/
+	{
+		key: 'Stale',
+		graph: true,
+	},
+	{
+		key: 'LastDiff',
+		graph: true,
+		format: function (x) { return x.toFixed(0); },
+	},
+	{
+		key: 'Asic Boost',
+		format: function (v) { return v ? "yes" : "no"; },
+	},
+];
+var fieldsChain = [
+	{
+		key: 'id',
+		name: 'Chain ID',
+	},
+	{
+		key: 'ratereal',
+		name: 'Real Rate',
+		desc: 'Hashrate computed from submitted shares',
+		graph: true,
+	},
+	{
+		key: 'ratechip',
+		name: 'Chip Rate',
+		desc: 'Hashrate reported by chips',
+		graph: true,
+	},
+	{
+		key: 'rateideal',
+		name: 'Ideal Rate',
+		desc: 'Theoretical hashrate at this frequency',
+	},
+	{
+		key: 'voltage',
+		name: 'Voltage',
+	},
+	{
+		key: 'frequency',
+		name: 'Frequency',
+	},
+	{
+		key: 'temp1',
+		name: 'Temp 1',
+		graph: true,
+	},
+	{
+		key: 'temp2',
+		name: 'Temp 2',
+		graph: true,
+	},
+	{
+		key: 'cores',
+		name: 'ASIC#',
+		desc: 'Number of ASIC chips on chain',
+	},
+	{
+		key: 'hwerrors',
+		name: 'HWerr',
+		desc: 'Absolute number of hardware errors since miner started',
+		graph: true,
+	},
+
+	{
+		key: 'hwerrorsrate',
+		name: 'HWerr/h',
+		desc: 'Average number of hardware errors per hour',
+		graph: true,
+		format: function (x) { return x.toFixed(1); },
+	},
+];
+var fieldsFan = [
+	{
+		key: 'id',
+		name: 'Fan ID',
+	},
+	{
+		key: 'rpm',
+		name: 'RPM',
+		desc: 'Revolutions Per Minute',
+		graph: true,
+	},
+];
+
+/* Each dictionary defines one "table". The keys mean the following:
+
+   elementId:	ID of HTML table element
+   keys:	list of keys to show (in the JSON request)
+   datasetKeys:	list of keys to graph (constant values like voltage does not
+		make sense to graph
+   prefix:	HTML ID prefix string (% gets replaced by index of table
+		entry)
+   nrowsGet	function that returns number of rows in table
+   rowsGet	function that returns row by index
+   subIds	Indexes of rows that are shown when the column heading is
+		clicked. Absence of this function means: heading not
+		clickable.
+*/
+
+var tables = [
+	{
+		elementId: 'chains-table',
+		fields: fieldsChain,
+		prefix: 'chain%',
+		nrowsGet: function (data) { return data.chains.length; },
+		rowGet: function (data, i) { return data.chains[i]; },
+		subIds: function (data, key) {
+			if (key == 'ratereal')
+				return [];
+			return range(0, data.chains.length - 1);
+		},
+		getRowName: function (data, i) {
+			if (i == data.chains.length - 1)
+				return 'aggregated';
+			else
+				return 'chain ' + data.chains[i].id;
+		},
+	},
+	{
+		elementId: 'pools-table',
+		fields: fieldsPool,
+		prefix: 'pool%',
+		nrowsGet: function (data) { return data.pools.length; },
+		rowGet: function (data, i) { return data.pools[i]; },
+		subIds: function (data, k) { return range(0, data.pools.length); },
+		getRowName: function (data, i) { return 'pool ' + data.pools[i].id; },
+	},
+	{
+		elementId: 'summary-table',
+		fields: fieldsSummary,
+		prefix: 'stat',
+		nrowsGet: function (data) { return 1; },
+		rowGet: function (data, i) { return data.stats; },
+	},
+	{
+		elementId: 'fans-table',
+		fields: fieldsFan,
+		prefix: 'fan%',
+		nrowsGet: function (data) { return data.fans.length; },
+		rowGet: function (data, i) { return data.fans[i]; },
+		subIds: function (data, k) { return range(0, data.fans.length); },
+		getRowName: function (data, i) { return 'fan ' + data.fans[i].id; },
+	},
+
+];
+
+function getName(field)
+{
+	return field.name || field.key;
+}
+
+function makeId(prefix, key, id)
+{
+	return prefix.replace('%', id) + '_' + key.replace(' ', '_');
+}
+
+function changeOnclickGen(state, graphIds, annot)
+{
+	if (graphIds.length == 0)
+		return null;
+	return function () {
+		switchToGraphs(state, graphIds, annot);
+		return false;
+	}
+}
+
+function getAnnotation(def, data, field, ids)
+{
+	var annot = getName(field);
+	if (def.getRowName) {
+		var rows = ids.map(
+			function (i) { return def.getRowName(data, i); }
+		);
+		annot += ' (' + rows.join(', ') + ')';
+	}
+	return annot;
+}
+
+function buildTable(state, def, data)
+{
+	var table = document.getElementById(def.elementId);
+	var th = def.fields.map(function (field) {
+		var name = getName(field);
+		if (field.graph && def.subIds) {
+			var ids = def.subIds(data, field.key).map(
+				function (i) { return makeId(def.prefix, field.key, i); }
+			);
+			var annot = getAnnotation(def, data, field, def.subIds(data, field.key));
+			return makeDataCell('th', null, name,
+				changeOnclickGen(state, ids, annot),
+				field.desc || name);
+		} else {
+			return makeDataCell('th', null, name, null, field.desc);
+		}
+	});
+	var rows = [th];
+	for (var i = 0; i < def.nrowsGet(data); i++) {
+		var row = def.fields.map(function (field) {
+			var annot = getAnnotation(def, data, field, [i]);
+			var id = makeId(def.prefix, field.key, i);
+			var clickFn = null;
+			if (field.graph) {
+				clickFn = changeOnclickGen(state, [id], annot);
+				state.datasets[id] = new Dataset(SAMPLING_FREQ, KEEP_HISTORY_SEC);
+			}
+			return makeDataCell('td', id, '-', clickFn);
+		});
+		rows.push(row);
+	}
+	rows.forEach(
+		function (row) { return table.appendChild(makeRow(row)); }
+	);
+}
+
+function updateTable(state, def, data)
+{
+	for (var i = 0; i < def.nrowsGet(data); i++) {
+		var row = def.rowGet(data, i);
+		def.fields.forEach(function (field) {
+			var id = makeId(def.prefix, field.key, i);
+			var val = row[field.key];
+			var show = val;
+			if (field.format)
+				show = field.format(show);
+			setId(id, show);
+			if (field.graph) {
+				state.datasets[id].push(val);
+			}
+		});
+	}
+}
+
+function updateTables(state, data)
+{
+	if (!state.datasetsReady) {
+		tables.forEach(
+			function (x) { return buildTable(state, x, data); }
+		);
+		state.datasetsReady= true;
+	}
+	tables.forEach(
+		function (x) { return updateTable(state, x, data); }
+	);
+}
+
+function updateTablesNoData(state, isDead)
+{
+	for (id in state.datasets) {
+		if (isDead)
+			state.datasets[id].push(0);
+		else
+			state.datasets[id].pushLast();
+	}
+}
+
+function doRequest(state)
+{
+	var xhr = new XMLHttpRequest();
+	var url = location.protocol + '//' + location.host + ':' + API_PORT + '/stats+pools+summary';
+	xhr.open('GET', url, true);
+
+	xhr.timeout = PAGE_TICK_DURATION_MS * 0.9;
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4) {
+			try {
+				state.json = eval('(' + xhr.responseText + ')');
+			} catch(e) {
+				state.json = null;
+			};
+		}
+	};
+	xhr.ontimeout = function() {
+		console.log("timeout");
+	};
+	xhr.send(null);
+}
+
+function redrawGraphs(state)
+{
+	if (!state.datasetsReady)
+		return;
+
+	drawGraphs(state, state.currentGraphs.map(
+		function (id) { return state.datasets[id].getBundle(DRAW_HISTORY_SEC); }
+	));
+}
+
+function switchToGraphs(state, graphNames, annot)
+{
+	console.log('change to', graphNames);
+	state.currentGraphs = graphNames;
+	state.graphAnnot = annot;
+	setId('what', ': '+ annot);
+	redrawGraphs(state);
+}
+
+function runPageTick(state)
+{
+	/* process current request */
+	if (state.json) {
+		var data = transcribeApi(state.json);
+		updateTables(state, data);
+		state.deadForMs = 0;
+		setId('status', 'OK');
+	} else {
+		state.deadForMs += PAGE_TICK_DURATION_MS;
+		var dead = state.deadForMs >= PAGE_DEAD_TIMEOUT_MS;
+
+		updateTablesNoData(state, dead);
+		setId('status', dead ? "Can't connect to miner" : 'Stalled');
+	}
+
+	/* clear state */
+	state.json = null;
+
+	/* make new request */
+	doRequest(state);
+	redrawGraphs(state);
+}
+
+function initPage(svg, svgDoc)
+{
+	var globalState = {
+		json: null,
+		line: [],
+		datasets: {},
+		deadForMs: PAGE_DEAD_TIMEOUT_MS,
+		svg: svg,
+		svgDoc: svgDoc,
+		currentGraphs: ['stat_Hashrate1m'],
+		graphAnnot: 'Hashrate',
+	};
+
+	initGraph(globalState);
+
+	var sched = new Scheduler(
+		function () { return runPageTick(globalState); },
+		PAGE_TICK_DURATION_MS
+	);
+	sched.run();
+}
+
+function waitForSvg(id, callback)
+{
+	var svg = document.getElementById(id);
+	var svgDoc;
         try {
-            G = svg.getSVGDocument
+            svgDoc = svg.getSVGDocument
                 ? svg.getSVGDocument() : svg.contentDocument;
+        } catch(e) {
+            svgDoc = document.embeds[id].getSVGDocument();
         }
-        catch(e) {
-            G = document.embeds['hashrate_svg'].getSVGDocument();
-        }
+	if (!svgDoc) {
+		console.log('svg not there, waiting...');
+		setTimeout(waitForSvg, 500, id, callback);
+	} else {
+		callback(svg, svgDoc);
+	}
+}
 
-        if (!G)
-        {
-            window.setTimeout(arguments.callee, 1000);
-        }
-        else
-        {
-            var i, j, k;
+waitForSvg('hashrate-svg', initPage);
 
-            var STEP = 5;
-            var WIDTH = svg.offsetWidth - 2;
-            var HEIGHT = svg.offsetHeight - 2;
-            var DATA_WANTED = Math.floor(WIDTH / STEP);
-
-            /* find svg elements */
-            label_25 = G.getElementById('label_25');
-            label_50 = G.getElementById('label_50');
-            label_75 = G.getElementById('label_75');
-
-            label_scale = document.getElementById('scale');
-
-            for (k = 0; k < VIEW_HASHRATES; ++k) {
-                line_hashrate[k] = G.getElementById('hashrate' + (k + 1));
-            }
-
-            for (j = 0; j < HASHRATE_SUFFIX.length; ++j)
-            {
-                var label_suffix = HASHRATE_SUFFIX[j];
-                label_hashrate[label_suffix] = [];
-                for (i = 0; i < VIEW_HASHRATES; ++i)
-                {
-                    var label_prefix = 'lb_hashrate' + (i + 1);
-                    label_hashrate[label_suffix][i] = document.getElementById(label_prefix + '_' + label_suffix);
-                }
-            }
-            for (i = 0; i < VIEW_CHAINS; ++i) {
-                label_chain[i] = document.getElementById('lb_hashrate_chain' + i);
-                label_accepted[i] = document.getElementById('lb_accepted_chain' + i);
-                label_rejected[i] = document.getElementById('lb_rejected_chain' + i);
-            }
-
-            /* plot horizontal time interval lines */
-            var LINE1_X = WIDTH % (STEP * 60);
-            for (i = LINE1_X; i < WIDTH; i += STEP * 60)
-            {
-                var line = G.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', i);
-                line.setAttribute('y1', 0);
-                line.setAttribute('x2', i);
-                line.setAttribute('y2', '100%');
-                line.setAttribute('style', 'stroke:black;stroke-width:0.1');
-
-                var text = G.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', i + 5);
-                text.setAttribute('y', 15);
-                text.setAttribute('style', 'fill:#999999; font-size:9pt');
-                text.appendChild(G.createTextNode(Math.round((WIDTH - i) / STEP / 60) + 'm'));
-
-                label_25.parentNode.appendChild(line);
-                label_25.parentNode.appendChild(text);
-            }
-
-            label_25.setAttribute('x', LINE1_X - 2);
-            label_50.setAttribute('x', LINE1_X - 2);
-            label_75.setAttribute('x', LINE1_X - 2);
-
-            label_scale.innerHTML = String.format('<%:(%d minute window, %d second interval)%>', DATA_WANTED / 60, 3);
-
-            /* prefill datasets */
-            for (k = 0; k < VIEW_HASHRATES; ++k)
-            {
-                sample[k] = [];
-                for (i = 0; i < DATA_WANTED; ++i) {
-                    sample[k][i] = 0;
-                }
-            }
-
-            /* render datasets, start update interval */
-            XHR.poll(3, '<%=build_url("admin/status/miner/devs_status")%>', null,
-                function(x, data)
-                {
-                    var chains = [];
-                    var i, j, k;
-
-                    if (data && data.length)
-                    {
-                        for (i = data.length - 1; i >= 0; --i)
-                        {
-                            /* skip overlapping entries */
-                            if (data[i]["time"] <= sample_stamp) {
-                                continue;
-                            }
-
-                            var chains_cur = data[i]["chains"];
-                            for (k = 0; k < VIEW_HASHRATES; ++k)
-                            {
-                                var hashrate = 0.0;
-                                for (j = 0; j < chains_cur.length; ++j) {
-                                    hashrate += chains_cur[j]["mhs"][k + 1];
-                                }
-                                sample[k].push(hashrate);
-                            }
-                        }
-
-                        /* cut off outdated entries */
-                        for (k = 0; k < VIEW_HASHRATES; ++k) {
-                            sample[k] = sample[k].slice(sample[k].length - DATA_WANTED);
-                        }
-
-                        /* remember current timestamp, calculate horizontal scale */
-                        sample_stamp = data[0]["time"];
-                    }
-
-                    var hashrate_cur = [];
-                    var hashrate_sum = [];
-                    var hashrate_peak = [];
-
-                    for (k = 0; k < VIEW_HASHRATES; ++k)
-                    {
-                        hashrate_cur[k] = 0.0;
-                        hashrate_sum[k] = 0.0;
-                        hashrate_peak[k] = 0.0;
-                    }
-
-                    var sample_length = sample[0].length;
-                    for (i = 0; i < sample_length; ++i)
-                    {
-                        for (k = 0; k < VIEW_HASHRATES; ++k) {
-                            hashrate_peak[k] = Math.max(hashrate_peak[k], sample[k][i]);
-                            hashrate_sum[k] += sample[k][i];
-                        }
-                    }
-
-                    var hashrate_max = 0;
-                    for (k = 0; k < VIEW_HASHRATES; ++k) {
-                        hashrate_max = Math.max(hashrate_max, hashrate_peak[k]);
-                    }
-
-                    var data_scale = hashrate_max ? (HEIGHT / (hashrate_max * 1.1)) : 0;
-
-                    /* plot data */
-                    label_25.firstChild.data = (1.1 * 0.25 * hashrate_max / 1000000).toFixed(2);
-                    label_50.firstChild.data = (1.1 * 0.50 * hashrate_max / 1000000).toFixed(2);
-                    label_75.firstChild.data = (1.1 * 0.75 * hashrate_max / 1000000).toFixed(2);
-
-                    for (k = 0; k < VIEW_HASHRATES; ++k)
-                    {
-                        var points = '0,' + HEIGHT;
-                        var y = 0;
-
-                        for (i = 0; i < sample_length; ++i) {
-                            var x = i * STEP;
-
-                            y = HEIGHT - Math.floor(sample[k][i] * data_scale);
-                            points += ' ' + x + ',' + y;
-                        }
-
-                        points += ' ' + WIDTH + ',' + y + ' ' + WIDTH + ',' + HEIGHT;
-                        line_hashrate[k].setAttribute('points', points);
-                    }
-
-                    if (data && data.length) {
-                        chains = data[0]["chains"];
-                    }
-                    for (i = 0, j = 0; i < VIEW_CHAINS; ++i)
-                    {
-                        if (j < chains.length && i === chains[j]["id"])
-                        {
-                            var chain = chains[j++];
-                            var mhs = chain["mhs"][0];
-                            label_chain[i].innerHTML = (mhs ? (mhs / 1000).toFixed(2) : 0) + ' Gh/s';
-                            for (k = 0; k < VIEW_HASHRATES; ++k) {
-                                hashrate_cur[k] += chain["mhs"][k + 1];
-                            }
-                            var accepted = chain["acpt"];
-                            var rejected = chain["rjct"];
-                            var ar_sum = accepted + rejected;
-                            label_accepted[i].innerHTML = accepted;
-                            label_rejected[i].innerHTML = rejected;
-                            if (ar_sum)
-                            {
-                                label_accepted[i].innerHTML += ' (' + (accepted / ar_sum * 100).toFixed(1) + '%)';
-                                label_rejected[i].innerHTML += ' (' + (rejected / ar_sum * 100).toFixed(1) + '%)';
-                            }
-                        }
-                        else
-                        {
-                            label_chain[i].innerHTML = 0 + ' Mh/s';
-                            label_accepted[i].innerHTML = 0;
-                            label_rejected[i].innerHTML = 0;
-                        }
-                    }
-
-                    for (k = 0; k < VIEW_HASHRATES; ++k)
-                    {
-                        label_hashrate[CURRENT][k].innerHTML =
-                            (hashrate_cur[k] ? (hashrate_cur[k] / 1000000).toFixed(2) : 0) + ' Th/s';
-                        label_hashrate[AVERAGE][k].innerHTML =
-                            (hashrate_sum[k] ? (hashrate_sum[k] / sample_length / 1000000).toFixed(2) : 0) + ' Th/s';
-                        label_hashrate[PEAK][k].innerHTML =
-                            (hashrate_peak[k] ? (hashrate_peak[k] / 1000000).toFixed(2) : 0) + ' Th/s';
-                    }
-                }
-            );
-        }
-    }, 1000
-);
 //]]></script>
 
-<h2 name="content"><%:Miner Hash Rate%></h2>
-
-<embed id="hashrate_svg" style="width:100%; height:300px; border:1px solid #000000; background-color:#FFFFFF" src="<%=resource%>/miner_hashrate.svg" />
 <div style="text-align:right"><small id="scale"></small></div>
 <br />
-
-<table style="width:100%; table-layout:fixed" cellspacing="5">
- <tr>
-  <td style="text-align:right; vertical-align:top"><strong style="border-bottom:2px solid #ff0000; white-space:nowrap"><%:1 Minute Hash Rate:%></strong></td>
-  <td id="lb_hashrate1_cur">0</td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Average:%></strong></td>
-  <td id="lb_hashrate1_avg">0</td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Peak:%></strong></td>
-  <td id="lb_hashrate1_peak">0</td>
- </tr>
- <tr>
-  <td style="text-align:right; vertical-align:top"><strong style="border-bottom:2px solid #ff6600; white-space:nowrap"><%:5 Minute Hash Rate:%></strong></td>
-  <td id="lb_hashrate2_cur">0</td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Average:%></strong></td>
-  <td id="lb_hashrate2_avg">0</td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Peak:%></strong></td>
-  <td id="lb_hashrate2_peak">0</td>
- </tr>
- <tr>
-  <td style="text-align:right; vertical-align:top"><strong style="border-bottom:2px solid #ffaa00; white-space:nowrap"><%:15 Minute Hash Rate:%></strong></td>
-  <td id="lb_hashrate3_cur">0</td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Average:%></strong></td>
-  <td id="lb_hashrate3_avg">0</td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Peak:%></strong></td>
-  <td id="lb_hashrate3_peak">0</td>
- </tr>
- <tr>
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 0:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
-  <td>
-   <span id="lb_hashrate_chain0">0</span><br />
-   <small id="lb_accepted_chain0">0</small><br />
-   <small id="lb_rejected_chain0">0</small>
-  </td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 1:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
-  <td>
-   <span id="lb_hashrate_chain1">0</span><br />
-   <small id="lb_accepted_chain1">0</small><br />
-   <small id="lb_rejected_chain1">0</small>
-  </td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 2:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
-  <td>
-   <span id="lb_hashrate_chain2">0</span><br />
-   <small id="lb_accepted_chain2">0</small><br />
-   <small id="lb_rejected_chain2">0</small>
-  </td>
- </tr>
- <tr>
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 3:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
-  <td>
-   <span id="lb_hashrate_chain3">0</span><br />
-   <small id="lb_accepted_chain3">0</small><br />
-   <small id="lb_rejected_chain3">0</small>
-  </td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 4:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
-  <td>
-   <span id="lb_hashrate_chain4">0</span><br />
-   <small id="lb_accepted_chain4">0</small><br />
-   <small id="lb_rejected_chain4">0</small>
-  </td>
-
-  <td style="text-align:right; vertical-align:top"><strong><%:Chain 5:%></strong><br /><small><%:Accepted:%><br /><%:Rejected:%></small></td>
-  <td>
-   <span id="lb_hashrate_chain5">0</span><br />
-   <small id="lb_accepted_chain5">0</small><br />
-   <small id="lb_rejected_chain5">0</small>
-  </td>
- </tr>
-</table>
 
 <%+footer%>
