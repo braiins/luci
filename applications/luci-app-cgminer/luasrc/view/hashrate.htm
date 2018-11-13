@@ -74,6 +74,13 @@ function listMax(list) {
 	}
 	return max;
 }
+function listMin(list) {
+	var min = list[0];
+	for (i in list) {
+		min = Math.min(min, list[i]);
+	}
+	return min;
+}
 function listSum(list) {
 	var sum = 0;
 	for (i in list) {
@@ -223,7 +230,7 @@ var fieldsRenameChain = {
 	'chain_hw': 'hwerrors',
 	'chain_hwrate': 'hwerrorsrate',
 };
-var sumFields = {
+var sumFieldsBmminer = {
 	//'ratechip': listSum,
 	'rateideal': listSum,
 	//'frequency': listAvg,
@@ -234,10 +241,9 @@ var sumFields = {
 	'hwerrorsrate': listSum,
 };
 
-function transcribeApi(json)
+function transcribeApiBmminer(json)
 {
 	var outChains = [];
-	var outStats = [];
 	var outPools = [];
 
 	var reqSummary = json.summary[0].SUMMARY[0];
@@ -255,7 +261,7 @@ function transcribeApi(json)
 		var r = reqStats['chain_rate' + i];
 		if (typeof(r) == "string" && r != '') {
 			var outChain = {
-				id: i,
+				ID: i,
 			};
 			for (key in fieldsRenameChain) {
 				var as = fieldsRenameChain[key];
@@ -279,17 +285,73 @@ function transcribeApi(json)
 		'rateideal': parseFloat(reqStats['total_rateideal']),
 		'frequency': parseFloat(reqStats['total_freqavg']),
 	};
-	for (key in sumFields) {
-		outSum[key] = sumFields[key](pickKey(outChains, key));
+	for (key in sumFieldsBmminer) {
+		outSum[key] = sumFieldsBmminer[key](pickKey(outChains, key));
 	};
 	outChains.push(outSum);
 	var out = {
+		type: 'bmminer',
 		stats: reqSummary,
 		pools: reqPools,
 		chains: outChains,
 		fans: outFans,
 	};
 	return out;
+}
+
+var sumFieldsCgminer = {
+	'MHS 5s': listSum,
+	'maximal MHS': listSum,
+	'TempAVG': listAvg,
+	'TempMIN': listMin,
+	'TempMAX': listMax,
+	'CHIP': listSum,
+	'CORE': listSum,
+	'Hardware Errors': listSum,
+	'Hardware Error Rate': listSum,
+};
+
+
+function transcribeApiCgminer(json)
+{
+	var outPools = [];
+
+	var reqSummary = json.summary[0].SUMMARY[0];
+
+	var reqPools = json.pools[0].POOLS;
+	for (var i in reqPools) {
+		/* TODO processing */
+		var reqPool = reqPools[i];
+		reqPool.id = parseFloat(i) + 1;
+		outPools.push(reqPool);
+	}
+
+	var reqDevs = json.devs[0].DEVS;
+
+	var outSum = {};
+	for (key in sumFieldsCgminer) {
+		outSum[key] = sumFieldsCgminer[key](pickKey(reqDevs, key));
+	};
+	reqDevs.push(outSum);
+
+	var out = {
+		type: 'cgminer',
+		stats: reqSummary,
+		pools: reqPools,
+		chains: reqDevs,
+	};
+	return out;
+}
+
+
+function transcribeApi(json)
+{
+	var reqStatsTop = json.stats[0].STATS;
+	if (reqStatsTop && reqStatsTop[1] && reqStatsTop[1].Type == 'braiins-am1-s9') {
+		return transcribeApiBmminer(json);
+	} else {
+		return transcribeApiCgminer(json);
+	}
 }
 
 /*
@@ -426,6 +488,9 @@ function drawGraphs(state, bundles)
  * Field description
  */
 
+function formatfix(n) { return function (x) { return x.toFixed(n); }; }
+function formatyesno(v) { return v ? "yes" : "no"; }
+
 var fieldsSummary = [
 	{
 		key: 'Hashrate1m',
@@ -433,7 +498,7 @@ var fieldsSummary = [
 		graph: true,
 		desc: 'Average hashrate, 1 minute window',
 		unit: 1e6,
-		format: function (x) { return x.toFixed(2); },
+		format: formatfix(2),
 	},
 	{
 		key: 'Hashrate15m',
@@ -441,7 +506,7 @@ var fieldsSummary = [
 		graph: true,
 		desc: 'Average hashrate, 15 minute window',
 		unit: 1e6,
-		format: function (x) { return x.toFixed(2); },
+		format: formatfix(2),
 	},
 	{
 		key: 'Hashrate24h',
@@ -449,7 +514,7 @@ var fieldsSummary = [
 		graph: true,
 		desc: 'Average hashrate, 24 hour window',
 		unit: 1e6,
-		format: function (x) { return x.toFixed(2); },
+		format: formatfix(2),
 	},
 	{
 		key: 'Found Blocks',
@@ -472,7 +537,7 @@ var fieldsSummary = [
 	{
 		key: 'Work Utility',
 		graph: true,
-		format: function (x) { return x.toFixed(0); },
+		format: formatfix(0),
 	},
 ];
 var fieldsPool = [
@@ -510,16 +575,86 @@ var fieldsPool = [
 	{
 		key: 'LastDiff',
 		graph: true,
-		format: function (x) { return x.toFixed(0); },
+		format: formatfix(0),
 	},
 	{
 		key: 'Asic Boost',
-		format: function (v) { return v ? "yes" : "no"; },
+		format: formatyesno,
 	},
 ];
-var fieldsChain = [
+var fieldsChainCgminer = [
 	{
-		key: 'id',
+		key: 'ID',
+		name: 'Chain ID',
+	},
+	{
+		key: 'MHS 5s',
+		name: 'Real Rate',
+		desc: 'Hashrate computed from submitted shares in Th/s (5s)',
+		graph: true,
+		format: function (x) { return (x/1000).toFixed(2); },
+	},
+	{
+		key: 'maximal MHS',
+		name: 'Maximal Rate',
+		desc: 'Theoretical hashrate with current number of cores in Th/s',
+		format: function (x) { return (x/1000).toFixed(2); },
+	},
+/*
+	{
+		key: 'voltage',
+		name: 'Voltage',
+	},
+	{
+		key: 'frequency',
+		name: 'Frequency',
+	},
+*/
+	{
+		key: 'TempAVG',
+		name: 'Temp avg.',
+		graph: true,
+		format: formatfix(1),
+	},
+	{
+		key: 'TempMIN',
+		name: 'Temp min.',
+		graph: true,
+		format: formatfix(1),
+	},
+	{
+		key: 'TempMAX',
+		name: 'Temp max.',
+		graph: true,
+		format: formatfix(1),
+	},
+	{
+		key: 'CHIP',
+		name: 'ASIC#',
+		desc: 'Number of ASIC chips on chain',
+	},
+	{
+		key: 'CORE',
+		name: 'ASIC#',
+		desc: 'Number of ASIC cores on chain',
+	},
+	{
+		key: 'Hardware Errors',
+		name: 'HWerr',
+		desc: 'Absolute number of hardware errors since miner started',
+		graph: true,
+	},
+	{
+		key: 'Hardware Error Rate',
+		name: 'HWerr/h',
+		desc: 'Average number of hardware errors per hour',
+		graph: true,
+		format: formatfix(1),
+	},
+];
+var fieldsChainBmminer = [
+	{
+		key: 'ID',
 		name: 'Chain ID',
 	},
 	{
@@ -568,7 +703,6 @@ var fieldsChain = [
 		desc: 'Absolute number of hardware errors since miner started',
 		graph: true,
 	},
-
 	{
 		key: 'hwerrorsrate',
 		name: 'HWerr/h',
@@ -608,7 +742,9 @@ var fieldsFan = [
 var tables = [
 	{
 		elementId: 'chains-table',
-		fields: fieldsChain,
+		getFields: function (data) {
+			return { bmminer: fieldsChainBmminer, cgminer: fieldsChainCgminer }[data.type];
+		},
 		prefix: 'chain%',
 		nrowsGet: function (data) { return data.chains.length; },
 		rowGet: function (data, i) { return data.chains[i]; },
@@ -621,12 +757,12 @@ var tables = [
 			if (i == data.chains.length - 1)
 				return 'aggregated';
 			else
-				return 'chain ' + data.chains[i].id;
+				return 'chain ' + data.chains[i].ID;
 		},
 	},
 	{
 		elementId: 'pools-table',
-		fields: fieldsPool,
+		getFields: function (data) { return fieldsPool; },
 		prefix: 'pool%',
 		nrowsGet: function (data) { return data.pools.length; },
 		rowGet: function (data, i) { return data.pools[i]; },
@@ -635,19 +771,20 @@ var tables = [
 	},
 	{
 		elementId: 'summary-table',
-		fields: fieldsSummary,
+		getFields: function (data) { return fieldsSummary; },
 		prefix: 'stat',
 		nrowsGet: function (data) { return 1; },
 		rowGet: function (data, i) { return data.stats; },
 	},
 	{
 		elementId: 'fans-table',
-		fields: fieldsFan,
+		getFields: function (data) { return fieldsFan; },
 		prefix: 'fan%',
 		nrowsGet: function (data) { return data.fans.length; },
 		rowGet: function (data, i) { return data.fans[i]; },
 		subIds: function (data, k) { return range(0, data.fans.length); },
 		getRowName: function (data, i) { return 'fan ' + data.fans[i].id; },
+		onlyFor: 'bmminer',
 	},
 
 ];
@@ -687,7 +824,7 @@ function getAnnotation(def, data, field, ids)
 function buildTable(state, def, data)
 {
 	var table = document.getElementById(def.elementId);
-	var th = def.fields.map(function (field) {
+	var th = def.getFields(data).map(function (field) {
 		var name = getName(field);
 		if (field.graph && def.subIds) {
 			var ids = def.subIds(data, field.key).map(
@@ -703,7 +840,7 @@ function buildTable(state, def, data)
 	});
 	var rows = [th];
 	for (var i = 0; i < def.nrowsGet(data); i++) {
-		var row = def.fields.map(function (field) {
+		var row = def.getFields(data).map(function (field) {
 			var annot = getAnnotation(def, data, field, [i]);
 			var id = makeId(def.prefix, field.key, i);
 			var clickFn = null;
@@ -724,7 +861,7 @@ function updateTable(state, def, data)
 {
 	for (var i = 0; i < def.nrowsGet(data); i++) {
 		var row = def.rowGet(data, i);
-		def.fields.forEach(function (field) {
+		def.getFields(data).forEach(function (field) {
 			var id = makeId(def.prefix, field.key, i);
 			var val = row[field.key];
 			var show = val;
@@ -738,16 +875,27 @@ function updateTable(state, def, data)
 	}
 }
 
+function isTableOk(data, def)
+{
+	return !def.onlyFor || def.onlyFor == data.type;
+}
+
 function updateTables(state, data)
 {
 	if (!state.datasetsReady) {
 		tables.forEach(
-			function (x) { return buildTable(state, x, data); }
+			function (x) {
+				if (isTableOk(data, x))
+					buildTable(state, x, data);
+			}
 		);
 		state.datasetsReady= true;
 	}
 	tables.forEach(
-		function (x) { return updateTable(state, x, data); }
+		function (x) {
+			if (isTableOk(data, x))
+				updateTable(state, x, data);
+		}
 	);
 }
 
@@ -764,7 +912,7 @@ function updateTablesNoData(state, isDead)
 function doRequest(state)
 {
 	var xhr = new XMLHttpRequest();
-	var url = location.protocol + '//' + location.host + ':' + API_PORT + '/stats+pools+summary';
+	var url = location.protocol + '//' + location.host + ':' + API_PORT + '/stats+pools+summary+devs';
 	xhr.open('GET', url, true);
 
 	xhr.timeout = PAGE_TICK_DURATION_MS * 0.9;
