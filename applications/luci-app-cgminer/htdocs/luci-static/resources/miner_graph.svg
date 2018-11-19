@@ -11,8 +11,8 @@
 	<line x1="0" y1="75%" x2="100%" y2="75%" style="stroke:black;stroke-width:0.1" />
 	<text id="label_25" text-anchor="start" x="5" y="74%" style="fill:#999999; font-size:9pt"> </text>
 
-	<polyline id="hashrate1" points="" style="fill:#ff0000;fill-opacity:0.4;stroke:#ff0000;stroke-width:1" />
-	<polyline id="hashrate2" points="" style="fill:#ff6600;fill-opacity:0.4;stroke:#ff6600;stroke-width:1" />
-	<polyline id="hashrate3" points="" style="fill:#ffaa00;fill-opacity:0.4;stroke:#ffaa00;stroke-width:1" />
+	<polyline id="hashrate1" points="" style="fill:#A3D2AF;fill-opacity:0.4;stroke:#A3D2AF;stroke-width:1" />
+	<polyline id="hashrate2" points="" style="fill:#80C5A5;fill-opacity:0.4;stroke:#80C5A5;stroke-width:1" />
+	<polyline id="hashrate3" points="" style="fill:#44BFE4;fill-opacity:0.4;stroke:#44BFE4;stroke-width:1" />
 	<text id="graph_name" text-anchor="start" x="5" y="98%" style="fill:#999999; font-size:10pt"> </text>
 </svg>

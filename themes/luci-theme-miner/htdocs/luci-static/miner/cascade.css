@@ -764,7 +764,7 @@ header {
 }
 
 header a {
-	color: #bfbfbf;
+	color: #ffffff;
 	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
@@ -796,17 +796,16 @@ header p {
 }
 
 header .fill {
-	background-color: #222;
-	background-color: #222222;
+	background-color: #152D49;
 	background-repeat: repeat-x;
-	background-image: -khtml-gradient(linear, left top, left bottom, from(#333333), to(#222222));
-	background-image: -moz-linear-gradient(top, #333333, #222222);
-	background-image: -ms-linear-gradient(top, #333333, #222222);
-	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #333333), color-stop(100%, #222222));
-	background-image: -webkit-linear-gradient(top, #333333, #222222);
-	background-image: -o-linear-gradient(top, #333333, #222222);
-	background-image: linear-gradient(to bottom, #333333, #222222);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#333333', endColorstr='#222222', GradientType=0);
+	background-image: -khtml-gradient(linear, left top, left bottom, from(#152D49), to(#152D49));
+	background-image: -moz-linear-gradient(top, #152D49, #152D49);
+	background-image: -ms-linear-gradient(top, #152D49, #152D49);
+	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #152D49), color-stop(100%, #152D49));
+	background-image: -webkit-linear-gradient(top, #152D49, #152D49);
+	background-image: -o-linear-gradient(top, #152D49, #152D49);
+	background-image: linear-gradient(to bottom, #152D49, #152D49);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#152D49', endColorstr='#152D49', GradientType=0);
 	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 	-moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
@@ -874,7 +873,7 @@ header div > ul .menu-dropdown,
 .nav .menu-dropdown,
 header div > ul .dropdown-menu,
 .nav .dropdown-menu {
-	background-color: #333;
+	background-color: #152D49;
 }
 
 header div > ul .menu-dropdown a.menu,
@@ -904,7 +903,7 @@ header div > ul .menu-dropdown li a,
 .nav .menu-dropdown li a,
 header div > ul .dropdown-menu li a,
 .nav .dropdown-menu li a {
-	color: #999;
+	color: #E5E5E5;
 	text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
 }
 
@@ -912,17 +911,15 @@ header div > ul .menu-dropdown li a:hover,
 .nav .menu-dropdown li a:hover,
 header div > ul .dropdown-menu li a:hover,
 .nav .dropdown-menu li a:hover {
-	background-color: #191919;
-	background-repeat: repeat-x;
-	background-image: -khtml-gradient(linear, left top, left bottom, from(#292929), to(#191919));
-	background-image: -moz-linear-gradient(top, #292929, #191919);
-	background-image: -ms-linear-gradient(top, #292929, #191919);
-	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #292929), color-stop(100%, #191919));
-	background-image: -webkit-linear-gradient(top, #292929, #191919);
-	background-image: -o-linear-gradient(top, #292929, #191919);
-	background-image: linear-gradient(to bottom, #292929, #191919);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#292929', endColorstr='#191919', GradientType=0);
-	color: #ffffff;
+    background-color: #091928;
+    background-repeat: repeat-x;
+    background-image: -khtml-gradient(linear, left top, left bottom, from(#292929), to(#191919));
+    background-image: -moz-linear-gradient(top, #292929, #191919);
+    background-image: -ms-linear-gradient(top, #292929, #191919);
+    background-image: -o-linear-gradient(top, #292929, #191919);
+    background-image: linear-gradient(to bottom, #091928, #091928);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#292929', endColorstr='#191919', GradientType=0);
+    color: #ffffff;
 }
 
 header div > ul .menu-dropdown .active a,
@@ -1146,7 +1143,7 @@ header .dropdown-menu a.hover,
 .cbi-tab > a:link, .cbi-tab > a:hover {
 	color: #808080;
 	background-color: #ffffff;
-	border: 1px solid #ddd;
+	border: 1px solid #E5EFF3;
 	border-bottom-color: transparent;
 	cursor: default;
 }
@@ -1979,4 +1976,9 @@ td.cbi-value-field var {
 .uci-change-legend-label var del {
 	line-height: 6px;
 	border: none;
+}
+#braiins-logo {
+	-webkit-filter: invert(100%); /* safari 6.0 - 9.0 */
+	filter: invert(100%);
+	width: 10em;
 }

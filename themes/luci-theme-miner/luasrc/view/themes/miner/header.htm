@@ -159,11 +159,11 @@
 <html lang="<%=luci.i18n.context.lang%>">
 	<head>
 		<meta charset="utf-8">
-		<title><%=striptags( (boardinfo.hostname or "?") .. ( (node and node.title) and ' - ' .. translate(node.title) or '')) %> - LuCI</title>
-		<!--[if lt IE 9]><script src="<%=media%>/html5.js"></script><![endif]-->
+		<title>Braiins OS <%=striptags( ( (node and node.title) and ' | ' .. translate(node.title) or '')) %></title>
+		<!--[if lt IE 9]><script src="<%=media%>/html5.js?v=git-18.320.40118-6598933"></script><![endif]-->
 		<meta name="viewport" content="initial-scale=1.0">
-		<link rel="stylesheet" href="<%=media%>/cascade.css">
-		<link rel="stylesheet" media="only screen and (max-device-width: 854px)" href="<%=media%>/mobile.css" type="text/css" />
+		<link rel="stylesheet" href="<%=media%>/cascade.css?v=git-18.320.40118-6598933">
+		<link rel="stylesheet" media="only screen and (max-device-width: 854px)" href="<%=media%>/mobile.css?v=git-18.320.40118-6598933" type="text/css" />
 		<link rel="shortcut icon" href="<%=media%>/favicon.ico">
 		<% if node and node.css then %>
 			<link rel="stylesheet" href="<%=resource%>/<%=node.css%>">
@@ -171,14 +171,14 @@
 		<% if css then %>
 			<style title="text/css"><%= css %></style>
 		<% end -%>
-		<script src="<%=resource%>/xhr.js"></script>
+		<script src="<%=resource%>/xhr.js?v=git-18.320.40118-6598933"></script>
 	</head>
 
 	<body class="lang_<%=luci.i18n.context.lang%> <%- if node then %><%= striptags( node.title ) %><%- end %>">
 		<header>
 			<div class="fill">
 				<div class="container">
-					<a class="brand" href="#"><img src="<%=media%>/braiinsOS_logo.png"/></a>
+					<a class="brand" href="#"><object type="image/svg+xml" data="<%=resource%>/braiinsOS_logo.svg" id="braiins-logo">Braiins OS | Open-source system for cryptocurrency devices</object></a>
 					<% render_topmenu() %>
 					<div class="pull-right">
 						<% render_changes() %>
