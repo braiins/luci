@@ -347,7 +347,7 @@ function transcribeApiCgminer(json)
 function transcribeApi(json)
 {
 	var reqStatsTop = json.stats[0].STATS;
-	if (reqStatsTop && reqStatsTop[1] && reqStatsTop[1].Type == 'braiins-am1-s9') {
+	if (reqStatsTop && reqStatsTop[0] && reqStatsTop[0].Type == 'braiins-am1-s9') {
 		return transcribeApiBmminer(json);
 	} else {
 		return transcribeApiCgminer(json);
