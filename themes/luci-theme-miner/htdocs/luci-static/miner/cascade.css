@@ -1978,7 +1978,5 @@ td.cbi-value-field var {
 	border: none;
 }
 #braiins-logo {
-	-webkit-filter: invert(100%); /* safari 6.0 - 9.0 */
-	filter: invert(100%);
-	width: 10em;
+	width: 7em;
 }
