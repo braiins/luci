@@ -400,6 +400,14 @@ function makeRow(cells)
 	return row;
 }
 
+function clearChildren(name)
+{
+	var e = document.getElementById(name);
+	while (e.hasChildNodes()) {
+		e.removeChild(e.lastChild);
+	}
+}
+
 function setId(name, value)
 {
 	//var id = name.replace(/\s/g, '_');
@@ -859,6 +867,14 @@ function buildTable(state, def, data)
 
 function updateTable(state, def, data)
 {
+	var table = document.getElementById(def.elementId);
+	/* check if number of rows from server (API) matches dimension of the table */
+	/* the extra +1 is for <th> element */
+	if (table.childElementCount != 1 + def.nrowsGet(data)) {
+		clearChildren(def.elementId);
+		buildTable(state, def, data);
+	}
+
 	for (var i = 0; i < def.nrowsGet(data); i++) {
 		var row = def.rowGet(data, i);
 		def.getFields(data).forEach(function (field) {
@@ -882,15 +898,6 @@ function isTableOk(data, def)
 
 function updateTables(state, data)
 {
-	if (!state.datasetsReady) {
-		tables.forEach(
-			function (x) {
-				if (isTableOk(data, x))
-					buildTable(state, x, data);
-			}
-		);
-		state.datasetsReady= true;
-	}
 	tables.forEach(
 		function (x) {
 			if (isTableOk(data, x))
@@ -933,12 +940,14 @@ function doRequest(state)
 
 function redrawGraphs(state)
 {
-	if (!state.datasetsReady)
-		return;
-
-	drawGraphs(state, state.currentGraphs.map(
-		function (id) { return state.datasets[id].getBundle(DRAW_HISTORY_SEC); }
-	));
+	var bundles = [];
+	state.currentGraphs.map(
+		function (id) {
+			var dataset = state.datasets[id];
+			if (dataset)
+				bundles.push(dataset.getBundle(DRAW_HISTORY_SEC));
+		});
+	drawGraphs(state, bundles);
 }
 
 function switchToGraphs(state, graphNames, annot)
