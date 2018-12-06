@@ -1139,7 +1139,7 @@ function waitForSvg(id, callback)
             svgDoc = svg.getSVGDocument
                 ? svg.getSVGDocument() : svg.contentDocument;
         } catch(e) {
-            svgDoc = document.embeds[id].getSVGDocument();
+            svgDoc = document.embeds[id].firstElementChild;
         }
 	if (!svgDoc) {
 		console.log('svg not there, waiting...');
