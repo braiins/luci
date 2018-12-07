@@ -15,7 +15,7 @@ table.stats { width: auto; margin-top: 1em; } //margin-left: auto; margin-right:
 	</style>
 
 <h1>Miner Status<span id="what"</span></h1>
-<p>API connection status: <span id="status">Not connected</span></p>
+<p>API connection status: <span id="status">Connecting...</span></p>
 
 <embed id="hashrate-svg" style="width:100%; height:300px; border:1px solid #000000; background-color:#FFFFFF" src="/luci-static/resources/miner_graph.svg">
 
@@ -413,6 +413,11 @@ function setId(name, value)
 	//var id = name.replace(/\s/g, '_');
 	var e = document.getElementById(name);
 	e.innerHTML = value === undefined ? '-' : value;
+}
+
+function setStatus(text)
+{
+	setId('status', text);
 }
 
 function initGraph(state)
@@ -925,6 +930,7 @@ function doRequest(state)
 	xhr.timeout = PAGE_TICK_DURATION_MS * 0.9;
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
+			state.firstRequest = false;
 			try {
 				state.json = eval('(' + xhr.responseText + ')');
 			} catch(e) {
@@ -963,16 +969,37 @@ function runPageTick(state)
 {
 	/* process current request */
 	if (state.json) {
-		var data = transcribeApi(state.json);
-		updateTables(state, data);
-		state.deadForMs = 0;
-		setId('status', 'OK');
+		if (state.json.code) {
+			var code = state.json.code;
+			if (code == 'error') {
+				setStatus('Error when connecting to CGMiner');
+			} else if (code == 'stopped') {
+				setStatus('CGMiner is stopped!');
+			} else if (code == 'started') {
+				var pid = state.json.pid;
+				if (state.lastPID != null && state.lastPID != pid) {
+					setStatus('CGMiner is trying to start but keeps restarting, maybe wrong configuration?');
+				} else {
+					setStatus('CGMiner is starting, waiting for hardware...');
+					state.lastPID = pid;
+				}
+			}
+			updateTablesNoData(state, true);
+		} else {
+			var data = transcribeApi(state.json);
+			updateTables(state, data);
+			state.deadForMs = 0;
+			setStatus('OK');
+			state.lastPID = null;
+		}
 	} else {
 		state.deadForMs += PAGE_TICK_DURATION_MS;
 		var dead = state.deadForMs >= PAGE_DEAD_TIMEOUT_MS;
 
 		updateTablesNoData(state, dead);
-		setId('status', dead ? "Can't connect to miner" : 'Stalled');
+		if (!state.firstRequest) {
+			setStatus(dead ? "Can't connect to miner" : 'Stalled');
+		}
 	}
 
 	/* clear state */
@@ -987,6 +1014,7 @@ function initPage(svg, svgDoc)
 {
 	var globalState = {
 		json: null,
+		lastPID: null,
 		line: [],
 		datasets: {},
 		deadForMs: PAGE_DEAD_TIMEOUT_MS,
@@ -994,6 +1022,7 @@ function initPage(svg, svgDoc)
 		svgDoc: svgDoc,
 		currentGraphs: ['stat_Hashrate1m'],
 		graphAnnot: 'Hashrate',
+		firstRequest: true,
 	};
 
 	initGraph(globalState);
