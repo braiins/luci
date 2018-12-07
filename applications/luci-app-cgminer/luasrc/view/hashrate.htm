@@ -919,7 +919,7 @@ function updateTablesNoData(state, isDead)
 function doRequest(state)
 {
 	var xhr = new XMLHttpRequest();
-	var url = location.protocol + '//' + location.host + ':' + API_PORT + '/stats+pools+summary+devs';
+	var url = '/cgi-bin/luci/admin/status/miner/api_status';
 	xhr.open('GET', url, true);
 
 	xhr.timeout = PAGE_TICK_DURATION_MS * 0.9;
