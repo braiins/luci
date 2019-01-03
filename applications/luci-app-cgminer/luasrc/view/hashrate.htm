@@ -250,14 +250,18 @@ var sumFieldsBmminer = {
 	'hwerrorsrate': listSum,
 };
 
-function transcribeApiBmminer(json)
+function transcribeApiCommon(json, out)
 {
-	var outChains = [];
+	/* determine miner type */
+	var reqStatsTop = json.stats[0].STATS;
+	if (reqStatsTop && reqStatsTop[0] && reqStatsTop[0].Type == 'braiins-am1-s9') {
+		out.type = 'bmminer';
+	} else {
+		out.type = 'cgminer';
+	}
+
+	/* parse pools */
 	var outPools = [];
-
-	var reqSummary = json.summary[0].SUMMARY[0];
-	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
-
 	var reqPools = json.pools[0].POOLS;
 	for (var i in reqPools) {
 		/* TODO processing */
@@ -265,8 +269,19 @@ function transcribeApiBmminer(json)
 		reqPool.id = parseFloat(i) + 1;
 		outPools.push(reqPool);
 	}
+	out.pools = outPools;
 
+	/* parse fan control */
+	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
+	out.fanctrl = reqFanCtrl;
+}
+
+function transcribeApiBmminer(json, out)
+{
+	/* parse chains */
+	var reqSummary = json.summary[0].SUMMARY[0];
 	var reqStats = json.stats[0].STATS[1];
+	var outChains = [];
 	for (var i = 1; i <= 16; i++) {
 		var r = reqStats['chain_rate' + i];
 		if (typeof(r) == "string" && r != '') {
@@ -281,6 +296,8 @@ function transcribeApiBmminer(json)
 			outChains.push(outChain);
 		}
 	}
+
+	/* parse fans */
 	var outFans = [];
 	for (var i = 1; i <= 8; i++) {
 		var f = reqStats['fan' + i];
@@ -289,6 +306,9 @@ function transcribeApiBmminer(json)
 			outFans.push(outFan);
 		}
 	}
+	out.fans = outFans;
+
+	/* parse stats */
 	var outSum = {
 		'ratereal': parseFloat(reqSummary['GHS av']),
 		'ratechip': parseFloat(reqStats['total_rate']),
@@ -299,15 +319,8 @@ function transcribeApiBmminer(json)
 		outSum[key] = sumFieldsBmminer[key](pickKey(outChains, key));
 	};
 	outChains.push(outSum);
-	var out = {
-		type: 'bmminer',
-		stats: reqSummary,
-		pools: reqPools,
-		chains: outChains,
-		fans: outFans,
-		fanctrl: reqFanCtrl,
-	};
-	return out;
+	out.stats = reqSummary;
+	out.chains = outChains;
 }
 
 var sumFieldsCgminer = {
@@ -323,48 +336,32 @@ var sumFieldsCgminer = {
 };
 
 
-function transcribeApiCgminer(json)
+function transcribeApiCgminer(json, out)
 {
-	var outPools = [];
-
 	var reqSummary = json.summary[0].SUMMARY[0];
-	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
-
-	var reqPools = json.pools[0].POOLS;
-	for (var i in reqPools) {
-		/* TODO processing */
-		var reqPool = reqPools[i];
-		reqPool.id = parseFloat(i) + 1;
-		outPools.push(reqPool);
-	}
-
 	var reqDevs = json.devs[0].DEVS;
-
 	var outSum = {};
 	for (key in sumFieldsCgminer) {
 		outSum[key] = sumFieldsCgminer[key](pickKey(reqDevs, key));
 	};
 	reqDevs.push(outSum);
 
-	var out = {
-		type: 'cgminer',
-		stats: reqSummary,
-		pools: reqPools,
-		chains: reqDevs,
-		fanctrl: reqFanCtrl,
-	};
-	return out;
+	out.stats = reqSummary;
+	out.chains = reqDevs;
 }
 
 
 function transcribeApi(json)
 {
 	var reqStatsTop = json.stats[0].STATS;
-	if (reqStatsTop && reqStatsTop[0] && reqStatsTop[0].Type == 'braiins-am1-s9') {
-		return transcribeApiBmminer(json);
+	var out = {};
+	transcribeApiCommon(json, out);
+	if (out.type == 'bmminer') {
+		transcribeApiBmminer(json, out);
 	} else {
-		return transcribeApiCgminer(json);
+		transcribeApiCgminer(json, out);
 	}
+	return out;
 }
 
 /*
