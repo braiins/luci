@@ -89,7 +89,7 @@ function action_devs()
 	luci.http.prepare_content("application/json")
 
 	-- query cgminer API and pass the result to application
-	local ok, result = query_cgminer_api('stats+pools+summary+devs')
+	local ok, result = query_cgminer_api('stats+pools+summary+devs+fanctrl')
 	if ok then
 		-- write it to the http output
 		luci.http.write(result)

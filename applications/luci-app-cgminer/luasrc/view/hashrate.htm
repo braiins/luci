@@ -8,10 +8,13 @@
 <script type="text/javascript" src="<%=resource%>/cbi.js?v=git-18.296.46953-d87b0c8"></script>
 
 	<style>
+table.clean { width: auto; border: none; padding: 0; }
+table.clean td { width: auto; border: none; padding: 0 2em 0 0; }
 table.stats td { border: 1px solid black !important; padding: 4px; min-width: 5em; text-align: center; }
-table.stats th { text-align: center; font-weight: bold; }
+table.stats th { border: none; text-align: center; font-weight: bold; }
 a { text-decoration: none; }
-table.stats { width: auto; margin-top: 1em; } //margin-left: auto; margin-right: auto; }
+table.stats { width: auto; margin-top: 1en; border: none; }
+
 	</style>
 
 <h1>Miner Status<span id="what"</span></h1>
@@ -19,11 +22,17 @@ table.stats { width: auto; margin-top: 1em; } //margin-left: auto; margin-right:
 
 <embed id="hashrate-svg" style="width:100%; height:300px; border:1px solid #000000; background-color:#FFFFFF" src="/luci-static/resources/miner_graph.svg">
 
-<table class="stats" id="chains-table" />
-<table class="stats" id="pools-table" />
-<table class="stats" id="summary-table" />
-<table class="stats" id="fans-table" />
-<table />
+<table class="stats" id="chains-table"></table>
+<table class="stats" id="pools-table"></table>
+<table class="stats" id="summary-table"></table>
+<table class="clean"><tr>
+<td>
+	<table class="stats" id="fanctrl-table"></table>
+</td>
+<td>
+	<table class="stats" id="fans-table"></table>
+</td>
+</tr></table>
 
 <script type="text/javascript">//<![CDATA[
 
@@ -247,6 +256,7 @@ function transcribeApiBmminer(json)
 	var outPools = [];
 
 	var reqSummary = json.summary[0].SUMMARY[0];
+	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
 
 	var reqPools = json.pools[0].POOLS;
 	for (var i in reqPools) {
@@ -295,6 +305,7 @@ function transcribeApiBmminer(json)
 		pools: reqPools,
 		chains: outChains,
 		fans: outFans,
+		fanctrl: reqFanCtrl,
 	};
 	return out;
 }
@@ -317,6 +328,7 @@ function transcribeApiCgminer(json)
 	var outPools = [];
 
 	var reqSummary = json.summary[0].SUMMARY[0];
+	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
 
 	var reqPools = json.pools[0].POOLS;
 	for (var i in reqPools) {
@@ -339,6 +351,7 @@ function transcribeApiCgminer(json)
 		stats: reqSummary,
 		pools: reqPools,
 		chains: reqDevs,
+		fanctrl: reqFanCtrl,
 	};
 	return out;
 }
@@ -502,6 +515,8 @@ function drawGraphs(state, bundles)
  */
 
 function formatfix(n) { return function (x) { return x.toFixed(n); }; }
+function formatfixsuf(n,suf) { return function (x) { return x.toFixed(n) + suf; }; }
+function formattemp(n) { return formatfixsuf(n, ' &deg;C'); }
 function formatyesno(v) { return v ? "yes" : "no"; }
 
 var fieldsSummary = [
@@ -627,19 +642,19 @@ var fieldsChainCgminer = [
 		key: 'TempAVG',
 		name: 'Temp avg.',
 		graph: true,
-		format: formatfix(1),
+		format: formattemp(1),
 	},
 	{
 		key: 'TempMIN',
 		name: 'Temp min.',
 		graph: true,
-		format: formatfix(1),
+		format: formattemp(1),
 	},
 	{
 		key: 'TempMAX',
 		name: 'Temp max.',
 		graph: true,
-		format: formatfix(1),
+		format: formattemp(1),
 	},
 	{
 		key: 'CHIP',
@@ -686,6 +701,7 @@ var fieldsChainBmminer = [
 		key: 'rateideal',
 		name: 'Ideal Rate',
 		desc: 'Theoretical hashrate at this frequency',
+		format: formatfix(1),
 	},
 	{
 		key: 'voltage',
@@ -699,11 +715,13 @@ var fieldsChainBmminer = [
 		key: 'temp1',
 		name: 'Temp 1',
 		graph: true,
+		format: formattemp(0),
 	},
 	{
 		key: 'temp2',
 		name: 'Temp 2',
 		graph: true,
+		format: formattemp(0),
 	},
 	{
 		key: 'cores',
@@ -736,6 +754,49 @@ var fieldsFan = [
 		graph: true,
 	},
 ];
+
+var fieldsFanCtrl = [
+	{
+		key: 'Mode',
+		name: 'Mode',
+		graph: true,
+	},
+	{
+		key: 'TargetTemp',
+		name: 'Target Temp',
+		desc: 'Target temperature, valid only for "automatic" mode',
+		format: formattemp(1),
+		graph: true,
+	},
+	{
+		key: 'TargetPwm',
+		name: 'Set Speed',
+		desc: 'Requested fan speed in %, valid only for "manual" mode',
+		format: formatfixsuf(0, '%'),
+	},
+	{
+		key: 'Interval',
+		name: 'Interval',
+		format: formatfixsuf(1, ' sec'),
+		desc: 'How often is temperature measure in seconds',
+	},
+	{
+		key: 'Temperature',
+		format: formattemp(1),
+		name: 'Temp',
+		desc: 'Current temperature that is used as input to fan control',
+		graph: true,
+	},
+	{
+		key: 'Output',
+		name: 'Fan Speed',
+		format: formatfixsuf(0, '%'),
+		desc: 'Current fan speed',
+		graph: true,
+	},
+];
+
+
 
 /* Each dictionary defines one "table". The keys mean the following:
 
@@ -788,6 +849,14 @@ var tables = [
 		prefix: 'stat',
 		nrowsGet: function (data) { return 1; },
 		rowGet: function (data, i) { return data.stats; },
+	},
+	{
+		elementId: 'fanctrl-table',
+		getCols: function (data) { return ['Temperature', 'TargetTemp', 'Output']; },
+		getFields: function (data) { return fieldsFanCtrl; },
+		prefix: 'fanctrl',
+		nrowsGet: function (data) { return 1; },
+		rowGet: function (data, i) { return data.fanctrl; },
 	},
 	{
 		elementId: 'fans-table',
@@ -853,14 +922,23 @@ function buildTable(state, def, data)
 	});
 	var rows = [th];
 	for (var i = 0; i < def.nrowsGet(data); i++) {
+		var col_i = 0;
 		var row = def.getFields(data).map(function (field) {
 			var annot = getAnnotation(def, data, field, [i]);
 			var id = makeId(def.prefix, field.key, i);
 			var clickFn = null;
 			if (field.graph) {
-				clickFn = changeOnclickGen(state, [id], annot);
+				var ids = [id];
+				if (col_i == 0 && def.getCols) {
+					ids = def.getCols(data).map(
+						function (key) { return makeId(def.prefix, key, i); }
+					);
+					annot = 'mixed values';
+				}
+				clickFn = changeOnclickGen(state, ids, annot);
 				state.datasets[id] = new Dataset(SAMPLING_FREQ, KEEP_HISTORY_SEC);
 			}
+			col_i++;
 			return makeDataCell('td', id, '-', clickFn);
 		});
 		rows.push(row);
