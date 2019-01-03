@@ -531,7 +531,7 @@ function drawGraphs(state, bundles)
  * Field description
  */
 
-function formatfix(n) { return function (x) { return x.toFixed(n); }; }
+function formatfix(n) { return function (x) { return x ? x.toFixed(n) : x; }; }
 function formatfixsuf(n,suf) { return function (x) { return x.toFixed(n) + suf; }; }
 function formattemp(n) { return formatfixsuf(n, ' &deg;C'); }
 function formatyesno(v) { return v ? "yes" : "no"; }
@@ -707,18 +707,20 @@ var fieldsChainBmminer = [
 		name: 'Real Rate',
 		desc: 'Hashrate computed from submitted shares',
 		graph: true,
+		format: formatfix(2),
 	},
 	{
 		key: 'ratechip',
 		name: 'Chip Rate',
 		desc: 'Hashrate reported by chips',
 		graph: true,
+		format: formatfix(2),
 	},
 	{
 		key: 'rateideal',
 		name: 'Ideal Rate',
 		desc: 'Theoretical hashrate at this frequency',
-		format: formatfix(1),
+		format: formatfix(2),
 	},
 	{
 		key: 'voltage',
