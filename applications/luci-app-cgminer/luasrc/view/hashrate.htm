@@ -274,6 +274,26 @@ function transcribeApiCommon(json, out)
 	/* parse fan control */
 	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
 	out.fanctrl = reqFanCtrl;
+	var mode = reqFanCtrl.Mode;
+	var target = "-";
+	switch (reqFanCtrl.Mode) {
+		case "automatic":
+			mode = "Automatic Temperature Control";
+			target = reqFanCtrl.TargetTemp.toFixed(1) + ' &deg;C';
+			break;
+		case "manual":
+			mode = "Fixed Fan Speed";
+			target = reqFanCtrl.TargetPwm.toFixed(0) + '%';
+			break;
+		case "emergency":
+			mode = "Fans Full Speed";
+			target = "-";
+			break;
+		default:
+			break;
+	}
+	out.fanctrl.ModeStr = mode;
+	out.fanctrl.Target = target;
 }
 
 function transcribeApiBmminer(json, out)
@@ -754,22 +774,14 @@ var fieldsFan = [
 
 var fieldsFanCtrl = [
 	{
-		key: 'Mode',
+		key: 'ModeStr',
 		name: 'Mode',
+		desc: 'Algorithm that controls fan speed',
 		graph: true,
 	},
 	{
-		key: 'TargetTemp',
-		name: 'Target Temp',
-		desc: 'Target temperature, valid only for "automatic" mode',
-		format: formattemp(1),
-		graph: true,
-	},
-	{
-		key: 'TargetPwm',
-		name: 'Set Speed',
-		desc: 'Requested fan speed in %, valid only for "manual" mode',
-		format: formatfixsuf(0, '%'),
+		key: 'Target',
+		name: 'Target Value',
 	},
 	{
 		key: 'Interval',
