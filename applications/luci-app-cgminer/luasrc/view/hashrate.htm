@@ -863,7 +863,7 @@ var tables = [
 	},
 	{
 		elementId: 'fanctrl-table',
-		getCols: function (data) { return ['Temperature', 'TargetTemp', 'Output']; },
+		getCols: function (data) { return ['Temperature', 'Output']; },
 		getFields: function (data) { return fieldsFanCtrl; },
 		prefix: 'fanctrl',
 		nrowsGet: function (data) { return 1; },
@@ -941,10 +941,14 @@ function buildTable(state, def, data)
 			if (field.graph) {
 				var ids = [id];
 				if (col_i == 0 && def.getCols) {
+					var mixed = [];
 					ids = def.getCols(data).map(
-						function (key) { return makeId(def.prefix, key, i); }
+						function (key) {
+							mixed.push(key);
+							return makeId(def.prefix, key, i);
+						}
 					);
-					annot = 'mixed values';
+					annot = mixed.join(', ');
 				}
 				clickFn = changeOnclickGen(state, ids, annot);
 				state.datasets[id] = new Dataset(SAMPLING_FREQ, KEEP_HISTORY_SEC);
