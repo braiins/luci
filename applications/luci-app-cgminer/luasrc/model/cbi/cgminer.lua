@@ -27,6 +27,7 @@ local CGMINER_CONFIG = '/etc/cgminer.conf'
 local DEFAULT_FREQUENCY_S9 = 650
 local DEFAULT_VOLTAGE_S9 = 8.8
 
+
 local MINER_MODEL
 do
 	local f = io.open('/tmp/sysinfo/board_name', 'r')
@@ -37,6 +38,11 @@ end
 local IS_AM1_MINER = MINER_MODEL == 'am1-s9'
 -- TODO: lookup what string does T1 miner USE
 local IS_T1_MINER = not IS_AM1_MINER
+
+local DEFAULT_TEMPERATURE_S9 = 75
+local DEFAULT_TEMPERATURE_T1 = 90
+local DEFAULT_TEMPERATURE = IS_AM1_MINER and DEFAULT_TEMPERATURE_S9 or DEFAULT_TEMPERATURE_T1
+local DEFAULT_FAN_SPEED = 100
 
 local function copy_table_into_table(dest, source)
 	for k, v in pairs(source) do
@@ -167,6 +173,31 @@ local obj_handlers = {
 			return json.pools[pos]._id
 		end,
 		keys = { 'url', 'user', 'pass' }
+	},
+	fancontrol = {
+		get = function (json, id, key)
+			return json[key]
+		end,
+		set = function (json, id, key, val)
+			json[key] = val
+		end,
+		load_fixup = function (json)
+			json['fan-ctrl-enabled'] = json['fan-ctrl'] and '1' or '0'
+		end,
+		save_fixup = function (json)
+			if json['fan-ctrl-enabled'] ~= '1' then
+				json['fan-ctrl'] = nil
+				json['fan-temp'] = nil
+				json['fan-speed'] = nil
+			end
+			local mode = json['fan-ctrl']
+			if mode == 'temp' then
+				json['fan-speed'] = nil
+			else
+				json['fan-temp'] = nil
+			end
+			json['fan-ctrl-enabled'] = nil
+		end,
 	},
 }
 local am1_handlers = {
@@ -316,10 +347,8 @@ function JsonUCICursor.foreach(self, config, sectiontype, fn)
 		for i = 1, 6 do
 			fn{ ['.name'] = make_sect_name('chainconfigs9', i) }
 		end
-	elseif sectiontype == 'miner' then
-		fn{ ['.name'] = 'miner' }
-	elseif sectiontype == 'miners9' then
-		fn{ ['.name'] = 'miners9' }
+	else
+		fn{ ['.name'] = sectiontype }
 	end
 end
 
@@ -410,9 +439,59 @@ o = s:option(Value, "pass", translate("Password"))
 o.datatype = "string"
 o.placeholder = "usually not required"
 
+
+
+s = m:section(TypedSection, "fancontrol", translate("Fan Control"),
+	translate("Temperature and fan speed control mode"))
+s.anonymous = true
+s.addremove = false
+
+
+o = s:option(DummyValue, "_warning", "")
+o.default = translatef('<div class="alert-message warning"><h4>Warning!</h4>Mis-configuring temperature control (ie. setting fan speed too low, setting target temperature too high, ...) may irreversibly damage your miner!<br></div>')
+o.rawhtml = true
+
+o = s:option(Flag, "fan-ctrl-enabled", translate("I understand"))
+
+o = s:option(ListValue, "fan-ctrl", translate("Mode of fan control"))
+o.oneline = false
+o.widget = "radio"
+o.optional = false
+o.rmempty = true
+o.default = "temp"
+o.size = 1
+o:depends("fan-ctrl-enabled", "1")
+o:value("temp", translate("Automatic Fan Control"))
+o:value("speed", translate("Fixed Fan Speed"))
+
+
+o = s:option(DummyValue, "_note1", " ")
+o:depends("fan-ctrl", "temp")
+o.default = 'Target temperature is in degree celsius. '
 if IS_AM1_MINER then
-	s = m:section(TypedSection, "miners9", translate("Miner"),
-		translate("General miner configuration"))
+	o.default = o.default .. 'The fan controller is trying to keep maximum of "Temp2" over all chains close to this value (+- two degrees).'
+else
+	o.default = o.default .. 'The fan controller is trying to keep maximum of all temperatures close to this value (+- two degrees).'
+end
+
+o = s:option(Value, "fan-temp", translate("Target temperature &deg;C"))
+o:depends("fan-ctrl", "temp")
+o.datatype = "range(30,95)"
+o.default = DEFAULT_TEMPERATURE
+
+o = s:option(DummyValue, "_note2", " ")
+o:depends("fan-ctrl", "speed")
+o.default = 'Target fan speed is in percent - "0" means fan off, "100" means fan full on. If you turn fan off (set it to 0%) and you will not provide additional way to cool the miner, it may overheat and die. However, cgminer may try to turn on the fans anyway if the temperature reaches "dangerous" level.'
+
+o = s:option(Value, "fan-speed", translate("Target fan speed %"))
+o:depends("fan-ctrl", "speed")
+o.datatype = "range(0,100)"
+o.default = DEFAULT_FAN_SPEED
+
+
+if IS_AM1_MINER then
+	s = m:section(TypedSection, "miners9", translate("Features"),
+		translate("Additional miner feature configuration"))
 	s.anonymous = true
 	s.addremove = false
 
