@@ -205,15 +205,26 @@ local am1_handlers = {
 		get = function (json, id, key)
 			if key == 'asicboost' then
 				return (tonumber(json['multi-version']) or 1) > 1 and '1' or '0'
+			else
+				return json[key]
 			end
-			return json[key] or ''
 		end,
 		set = function (json, id, key, val)
 			if key == 'asicboost' then
 				json['multi-version'] = val == '1' and '4' or '1'
+			else
+				json[key] = val
 			end
 		end,
-		keys = { 'asicboost', },
+		load_fixup = function (json)
+			json['overclock-enable'] = json['overclock'] and '1' or '0'
+		end,
+		save_fixup = function (json)
+			if json['overclock-enable'] ~= '1' then
+				json['overclock'] = nil
+			end
+			json['overclock-enable'] = nil
+		end,
 	},
 	chainconfigs9 = {
 		get = function (json, id, key)
@@ -497,8 +508,35 @@ if IS_AM1_MINER then
 
 	o = s:option(Flag, "asicboost", translate("ASIC Boost Enable"))
 
+	o = s:option(Flag, "overclock-enable", translate("Enable overclocking"))
+
+	o = s:option(DummyValue, "_note3", " ")
+	o:depends("overclock-enable", "1")
+	o.default = [[
+		Overclocking enables you to scale frequency by a constant
+		multiplier. If your frequency is 650 MHz then multiplier of 1 keeps frequency as it is (650 MHz),
+		1.05 overclocks frequency by 5% (682.5 MHz) and multiplier 0.93 underclocks frequency by 7% (604.5 MHz).
+
+		If you override frequencies in chain configuration bellow,
+		these frequencies will get scaled by the overclocking
+		multiplier.
+	]]
+
+	o = s:option(DummyValue, "_note4", " ")
+	o:depends("overclock-enable", "1")
+	o.default = [[
+		Overclocking is at your own risk and may damage
+		your miner.
+	]]
+
+
+	o = s:option(Value, "overclock", translate("Overclocking multiplier"))
+	o:depends("overclock-enable", "1")
+	o.datatype = "range(0,2)"
+	o.default = '1.00'
+
 	s = m:section(TypedSection, "chainconfigs9", translate("Chain Configuration"),
-		translate("Warning: overclock is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
+		translate("Warning: overclocking is at your own risk and vary in performance from miner to miner. It may damage miner in overheating condition."))
 	s.anonymous = false
 	s.addremove = false
 	s.template = "cbi/tblsection"
@@ -523,11 +561,17 @@ if IS_AM1_MINER then
 	o.placeholder = DEFAULT_VOLTAGE_S9
 	o.default = DEFAULT_VOLTAGE_S9
 
+	local factor = 1
+	if m:get("miners9", "overclock-enable") == '1' then
+		local overclock = m:get("miners9", "overclock")
+		factor = tonumber(overclock)
+	end
 	o = s:option(DummyValue, "recommended_voltage", translate("Recommended voltage"))
 	function o.cfgvalue(self, section)
 		local freq = m:get(section, "frequency")
 		if not freq or freq == '' then freq = DEFAULT_FREQUENCY_S9 end
-		return ("%.2fV (for %d MHz)"):format(getFixedFreqVoltageValue(freq), freq)
+		freq = freq * factor
+		return ("%.2fV (for %.1f MHz)"):format(getFixedFreqVoltageValue(freq), freq)
 	end
 elseif IS_T1_MINER then
 	s = m:section(TypedSection, "miner", translate("Miner"),
