@@ -6,6 +6,7 @@
 -%>
 
 <%
+	local fs = require "nixio.fs"
 	local sys  = require "luci.sys"
 	local util = require "luci.util"
 	local http = require "luci.http"
@@ -186,6 +187,14 @@
 							<span class="label success" id="xhr_poll_status_on"><%:Auto Refresh%> <%:on%></span>
 							<span class="label" id="xhr_poll_status_off" style="display:none"><%:Auto Refresh%> <%:off%></span>
 						</span>
+						<%- if fs.access('/tmp/bos_upgrade') then -%>
+							<form method="post" class="inline" action="/cgi-bin/luci/admin/system/packages">
+								<input type="hidden" name="exec" value="1" />
+								<input type="hidden" name="token" value="<%=token%>" />
+								<input type="hidden" name="install" value="firmware" />
+								<a class="label notice" onclick="window.confirm('<%:Install%> &quot;firmware&quot; ?') &#38;&#38; this.parentNode.submit(); return false" href="#"><%:Upgrade%></a>
+							</form>
+						<%- end -%>
 					</div>
 				</div>
 			</div>
