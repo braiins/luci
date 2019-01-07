@@ -278,7 +278,7 @@ function transcribeApiCommon(json, out)
 	var target = "-";
 	switch (reqFanCtrl.Mode) {
 		case "automatic":
-			mode = "Automatic Temperature Control";
+			mode = "Automatic Fan Control";
 			target = reqFanCtrl.TargetTemp.toFixed(1) + ' &deg;C';
 			break;
 		case "manual":
