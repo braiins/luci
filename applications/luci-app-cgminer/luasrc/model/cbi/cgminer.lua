@@ -492,7 +492,15 @@ o.default = DEFAULT_TEMPERATURE
 
 o = s:option(DummyValue, "_note2", " ")
 o:depends("fan-ctrl", "speed")
-o.default = 'Target fan speed is in percent - "0" means fan off, "100" means fan full on. If you turn fan off (set it to 0%) and you will not provide additional way to cool the miner, it may overheat and die. However, cgminer may try to turn on the fans anyway if the temperature reaches "dangerous" level.'
+o.default = [[
+	Target fan speed is in percent - "0" means fan off, "100" means fan
+	full on. If you turn fan off (set it to 0%) and you will not provide
+	additional way to cool the miner, it may overheat and die.
+
+	However, cgminer will try to TURN ON the fans ANYWAY if the temperature
+	reaches "dangerous" level, no matter what mode of control is selected,
+	but the miner might be already damaged at this point.
+]]
 
 o = s:option(Value, "fan-speed", translate("Target fan speed %"))
 o:depends("fan-ctrl", "speed")
