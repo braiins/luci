@@ -284,25 +284,24 @@ function transcribeApiCommon(json, out)
 	var reqFanCtrl = json.fanctrl[0].FANCTRL[0];
 	out.fanctrl = reqFanCtrl;
 	var mode = reqFanCtrl.Mode;
-	var target = "-";
 	switch (reqFanCtrl.Mode) {
 		case "automatic":
 			mode = "Automatic Fan Control";
-			target = reqFanCtrl.TargetTemp.toFixed(1) + ' &deg;C';
+			reqFanCtrl.TargetPwm = undefined;
 			break;
 		case "manual":
 			mode = "Fixed Fan Speed";
-			target = reqFanCtrl.TargetPwm.toFixed(0) + '%';
+			reqFanCtrl.TargetTemp = undefined;
 			break;
 		case "emergency":
 			mode = "Fans Full Speed";
-			target = "-";
+			reqFanCtrl.TargetPwm = undefined;
+			reqFanCtrl.TargetTemp = undefined;
 			break;
 		default:
 			break;
 	}
 	out.fanctrl.ModeStr = mode;
-	out.fanctrl.Target = target;
 }
 
 function transcribeApiBmminer(json, out)
@@ -795,8 +794,14 @@ var fieldsFanCtrl = [
 		graph: true,
 	},
 	{
-		key: 'Target',
-		name: 'Target Value',
+		key: 'TargetTemp',
+		name: 'Target Temp',
+		format: formattemp(0),
+	},
+	{
+		key: 'TargetPwm',
+		name: 'Target Speed',
+		format: formatfixsuf(0, '%'),
 	},
 	{
 		key: 'Interval',
@@ -1032,7 +1037,7 @@ function updateTable(state, def, data)
 			var id = makeId(def.prefix, field.key, i);
 			var val = row[field.key];
 			var show = val;
-			if (field.format)
+			if (val && field.format)
 				show = field.format(show);
 			setId(id, show);
 			if (field.graph) {
