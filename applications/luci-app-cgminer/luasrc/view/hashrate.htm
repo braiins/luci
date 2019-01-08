@@ -118,6 +118,15 @@ function range(a, b)
 	return t;
 }
 
+function lookupByKey(table, key, value)
+{
+	for (i in table) {
+		if (table[i][key] == value)
+			return table[i];
+	}
+	return null;
+}
+
 /*
  * Scheduler class (via closures)
  */
@@ -524,7 +533,7 @@ function drawGraphs(state, bundles)
 	state.label_25.firstChild.data = (0.25 * (max - min)).toFixed(2);
 	state.label_50.firstChild.data = (0.50 * (max - min)).toFixed(2);
 	state.label_75.firstChild.data = (0.75 * (max - min)).toFixed(2);
-	state.graph_name.firstChild.data = state.graphAnnot;
+	state.graph_name.firstChild.data = state.currentGraphsAnnot;
 }
 
 /*
@@ -823,7 +832,10 @@ var fieldsFanCtrl = [
 		entry)
    nrowsGet	function that returns number of rows in table
    rowsGet	function that returns row by index
-   subIds	Indexes of rows that are shown when the column heading is
+   getRowCols	Name of fields that are shown when first column is clicked.
+		Absence of this function means: first column has default
+		functionality.
+   getColSubrows Indexes of rows that are shown when the column heading is
 		clicked. Absence of this function means: heading not
 		clickable.
 */
@@ -832,12 +844,15 @@ var tables = [
 	{
 		elementId: 'chains-table',
 		getFields: function (data) {
-			return { bmminer: fieldsChainBmminer, cgminer: fieldsChainCgminer }[data.type];
+			if (data.type == 'bmminer')
+				return fieldsChainBmminer;
+			else
+				return fieldsChainCgminer;
 		},
 		prefix: 'chain%',
 		nrowsGet: function (data) { return data.chains.length; },
 		rowGet: function (data, i) { return data.chains[i]; },
-		subIds: function (data, key) {
+		getColSubrows: function (data, key) {
 			if (key == 'ratereal')
 				return [];
 			return range(0, data.chains.length - 1);
@@ -855,7 +870,7 @@ var tables = [
 		prefix: 'pool%',
 		nrowsGet: function (data) { return data.pools.length; },
 		rowGet: function (data, i) { return data.pools[i]; },
-		subIds: function (data, k) { return range(0, data.pools.length); },
+		getColSubrows: function (data, k) { return range(0, data.pools.length); },
 		getRowName: function (data, i) { return 'pool ' + data.pools[i].id; },
 	},
 	{
@@ -867,7 +882,7 @@ var tables = [
 	},
 	{
 		elementId: 'fanctrl-table',
-		getCols: function (data) { return ['Temperature', 'Output']; },
+		getRowColumns: function (data) { return ['Temperature', 'Output']; },
 		getFields: function (data) { return fieldsFanCtrl; },
 		prefix: 'fanctrl',
 		nrowsGet: function (data) { return 1; },
@@ -879,7 +894,7 @@ var tables = [
 		prefix: 'fan%',
 		nrowsGet: function (data) { return data.fans.length; },
 		rowGet: function (data, i) { return data.fans[i]; },
-		subIds: function (data, k) { return range(0, data.fans.length); },
+		getColSubrows: function (data, k) { return range(0, data.fans.length); },
 		getRowName: function (data, i) { return 'fan ' + data.fans[i].id; },
 		onlyFor: 'bmminer',
 	},
@@ -906,16 +921,62 @@ function changeOnclickGen(state, graphIds, annot)
 	}
 }
 
-function getAnnotation(def, data, field, ids)
+/* Generate click function for cols*rows cartesian product */
+function getClickFn(state, def, data, col_fields, row_ids)
 {
-	var annot = getName(field);
+	/* figure out graph description */
+	/* format is: colname1, colname2, ... (rowname1, rowname2, ...) */
+	var annot = col_fields.map(
+		function (field) { return getName(field); }
+	).join(', ');
+	/* name of rows is optional */
 	if (def.getRowName) {
-		var rows = ids.map(
-			function (i) { return def.getRowName(data, i); }
+		rowNames = row_ids.map(
+			function (i) {
+				return def.getRowName(data, i);
+			}
 		);
-		annot += ' (' + rows.join(', ') + ')';
+		annot += ' (' + rowNames.join(', ') + ')';
 	}
-	return annot;
+
+	/* figure out field ids */
+	var ids = [];
+	col_fields.forEach(
+		function (field) {
+			row_ids.forEach(
+				function (i) {
+					ids.push(makeId(def.prefix, field.key, i));
+				}
+			);
+		}
+	);
+
+	/* generate function */
+	return changeOnclickGen(state, ids, annot);
+}
+
+/* Generate click function for column */
+function getColClickFn(state, def, data, col_field)
+{
+	console.assert(def.getColSubrows && col_field.graph);
+	return getClickFn(state, def, data, [col_field], def.getColSubrows(data, col_field.key));
+}
+
+/* Generate click function for row */
+function getRowClickFn(state, def, data, row_id)
+{
+	console.assert(def.getRowColumns);
+	var col_fields = def.getRowColumns(data).map(
+		function (keyName) { return lookupByKey(def.getFields(data), 'key', keyName); }
+	);
+	return getClickFn(state, def, data, col_fields, [row_id]);
+}
+
+function getDefaultGraphFn(state, data)
+{
+	var def = lookupByKey(tables, 'elementId', 'summary-table');
+	var field = lookupByKey(def.getFields(data), 'key', 'Hashrate1m');
+	return getClickFn(state, def, data, [field], [0]);
 }
 
 function buildTable(state, def, data)
@@ -923,43 +984,31 @@ function buildTable(state, def, data)
 	var table = document.getElementById(def.elementId);
 	var th = def.getFields(data).map(function (field) {
 		var name = getName(field);
-		if (field.graph && def.subIds) {
-			var ids = def.subIds(data, field.key).map(
-				function (i) { return makeId(def.prefix, field.key, i); }
-			);
-			var annot = getAnnotation(def, data, field, def.subIds(data, field.key));
-			return makeDataCell('th', null, name,
-				changeOnclickGen(state, ids, annot),
-				field.desc || name);
-		} else {
-			return makeDataCell('th', null, name, null, field.desc);
+		var fn = null;
+		if (field.graph && def.getColSubrows) {
+			fn = getColClickFn(state, def, data, field);
 		}
+		return makeDataCell('th', null, name, fn, field.desc);
 	});
 	var rows = [th];
-	for (var i = 0; i < def.nrowsGet(data); i++) {
-		var col_i = 0;
-		var row = def.getFields(data).map(function (field) {
-			var annot = getAnnotation(def, data, field, [i]);
-			var id = makeId(def.prefix, field.key, i);
+	for (var row_i = 0; row_i < def.nrowsGet(data); row_i++) {
+		var fields = def.getFields(data);
+		var row = [];
+		for (col_i in fields) {
+			var field = fields[col_i];
+			var id = makeId(def.prefix, field.key, row_i);
 			var clickFn = null;
 			if (field.graph) {
-				var ids = [id];
-				if (col_i == 0 && def.getCols) {
-					var mixed = [];
-					ids = def.getCols(data).map(
-						function (key) {
-							mixed.push(key);
-							return makeId(def.prefix, key, i);
-						}
-					);
-					annot = mixed.join(', ');
+				if (col_i == 0 && def.getRowColumns) {
+					clickFn = getRowClickFn(state, def, data, row_i);
+				} else {
+					clickFn = getClickFn(state, def, data, [field], [row_i]);
 				}
-				clickFn = changeOnclickGen(state, ids, annot);
 				state.datasets[id] = new Dataset(SAMPLING_FREQ, KEEP_HISTORY_SEC);
 			}
-			col_i++;
-			return makeDataCell('td', id, '-', clickFn);
-		});
+			var td = makeDataCell('td', id, '-', clickFn);
+			row.push(td);
+		}
 		rows.push(row);
 	}
 	rows.forEach(
@@ -1006,6 +1055,10 @@ function updateTables(state, data)
 				updateTable(state, x, data);
 		}
 	);
+	if (state.currentGraphs.length == 0) {
+		/* clicks on link to default graph fn */
+		getDefaultGraphFn(state, data)();
+	}
 }
 
 function updateTablesNoData(state, isDead)
@@ -1055,9 +1108,9 @@ function redrawGraphs(state)
 
 function switchToGraphs(state, graphNames, annot)
 {
-	console.log('change to', graphNames);
+	console.log('change to', annot, graphNames);
 	state.currentGraphs = graphNames;
-	state.graphAnnot = annot;
+	state.currentGraphsAnnot = annot;
 	setId('what', ': '+ annot);
 	redrawGraphs(state);
 }
@@ -1117,8 +1170,8 @@ function initPage(svg, svgDoc)
 		deadForMs: PAGE_DEAD_TIMEOUT_MS,
 		svg: svg,
 		svgDoc: svgDoc,
-		currentGraphs: ['stat_Hashrate1m'],
-		graphAnnot: 'Hashrate',
+		currentGraphs: [],
+		currentGraphsAnnot: '',
 		firstRequest: true,
 	};
 
