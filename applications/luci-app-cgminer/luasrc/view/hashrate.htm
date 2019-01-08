@@ -14,6 +14,7 @@ table.stats td { border: 1px solid black !important; padding: 4px; min-width: 5e
 table.stats th { border: none; text-align: center; font-weight: bold; }
 a { text-decoration: none; }
 table.stats { width: auto; margin-top: 1en; border: none; }
+.highlighted { background-color: #ddd; }
 
 	</style>
 
@@ -451,6 +452,15 @@ function setId(name, value)
 	//var id = name.replace(/\s/g, '_');
 	var e = document.getElementById(name);
 	e.innerHTML = value === undefined ? '-' : value;
+}
+
+function setHighlighted(name, on)
+{
+	var e = document.getElementById(name);
+	while (e.tagName != 'TD') {
+		e = e.parentElement;
+	}
+	e.className = on ? 'highlighted' : '';
 }
 
 function setStatus(text)
@@ -1114,9 +1124,16 @@ function redrawGraphs(state)
 function switchToGraphs(state, graphNames, annot)
 {
 	console.log('change to', annot, graphNames);
+	state.currentGraphs.forEach(
+		function (id) { setHighlighted(id, false); }
+	);
 	state.currentGraphs = graphNames;
 	state.currentGraphsAnnot = annot;
 	setId('what', ': '+ annot);
+	state.currentGraphs.forEach(
+		function (id) { setHighlighted(id, true); }
+	);
+
 	redrawGraphs(state);
 }
 
