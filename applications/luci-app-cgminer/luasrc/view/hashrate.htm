@@ -761,6 +761,26 @@ var fieldsChainBmminer = [
 		name: 'Frequency',
 		desc: 'Average chip frequency on chain (MHz)',
 		abbr: 'frequency_desc',
+		format: function (x, data) {
+			var desc = data.frequency_desc;
+			if (desc == null) return x;
+			var out = x.toFixed(0);
+			var color = null;
+			var m = /overclocked by factor ([0-9\.]+\.[0-9]+)/.exec(desc);
+			if (m != null) {
+				var f = parseFloat(m[1]);
+				color = 'green';
+				if (f > 1)
+					color = '#909';
+			}
+			if (desc.search(/user/) >= 0) {
+				color = 'red';
+			}
+			if (color != null)
+				out = '<font color=' + color + '>' + out + '</font>'
+			return out;
+		},
+
 	},
 	{
 		key: 'temp1',
@@ -1062,7 +1082,7 @@ function updateTable(state, def, data)
 			var val = row[field.key];
 			var show = val;
 			if (val && field.format)
-				show = field.format(show);
+				show = field.format(show, row);
 			setId(id, show);
 			if (field.abbr) {
 				setAbbr(id, row[field.abbr]);
