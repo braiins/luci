@@ -322,6 +322,12 @@ function transcribeApiBmminer(json, out)
 				var val = reqStats[key + i];
 				outChain[as] = parseFloat(val);
 			}
+
+			/* parse (non-numerical) freq description */
+			var desc = reqStats['freq_desc' + i];
+			if (typeof(desc) == "string")
+				outChain['frequency_desc'] = desc;
+
 			outChains.push(outChain);
 		}
 	}
@@ -402,7 +408,7 @@ function makeDataCell(kind, id, value, onclick, description)
 	var node;
 
 	/* create text with description */
-	if (description) {
+	if (description != undefined) {
 		node = document.createElement('abbr');
 		node.title = description;
 	} else {
@@ -447,9 +453,14 @@ function clearChildren(name)
 	}
 }
 
+function setAbbr(name, value)
+{
+	var e = document.getElementById(name);
+	e.title = value;
+}
+
 function setId(name, value)
 {
-	//var id = name.replace(/\s/g, '_');
 	var e = document.getElementById(name);
 	e.innerHTML = value === undefined ? '-' : value;
 }
@@ -749,6 +760,7 @@ var fieldsChainBmminer = [
 		key: 'frequency',
 		name: 'Frequency',
 		desc: 'Average chip frequency on chain (MHz)',
+		abbr: 'frequency_desc',
 	},
 	{
 		key: 'temp1',
@@ -1021,7 +1033,9 @@ function buildTable(state, def, data)
 				}
 				state.datasets[id] = new Dataset(SAMPLING_FREQ, KEEP_HISTORY_SEC);
 			}
-			var td = makeDataCell('td', id, '-', clickFn);
+			var is_subrow = def.getColSubrows && def.getColSubrows(data, field.key).indexOf(row_i) >= 0;
+			var desc = field.abbr && is_subrow ? "" : undefined;
+			var td = makeDataCell('td', id, '-', clickFn, desc);
 			row.push(td);
 		}
 		rows.push(row);
@@ -1050,6 +1064,9 @@ function updateTable(state, def, data)
 			if (val && field.format)
 				show = field.format(show);
 			setId(id, show);
+			if (field.abbr) {
+				setAbbr(id, row[field.abbr]);
+			}
 			if (field.graph) {
 				state.datasets[id].push(val);
 			}
