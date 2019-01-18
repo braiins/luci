@@ -128,6 +128,12 @@ function lookupByKey(table, key, value)
 	return null;
 }
 
+function zeroPad(num, places)
+{
+  var zero = places - num.toString().length + 1;
+  return Array(+(zero > 0 && zero)).join("0") + num;
+}
+
 /*
  * Scheduler class (via closures)
  */
@@ -238,23 +244,31 @@ Dataset.prototype.getBundle = function (nSeconds)
  * Transcribe Bitmain API results to our format
  */
 
-var fieldsRenameChain = {
+var fieldsRenameChainNum = {
 	'chain_rate': 'ratechip',
 	'chain_rateideal': 'rateideal',
 	'voltage': 'voltage',
 	'freq_avg': 'frequency',
 	'temp': 'temp1',
 	'temp2_': 'temp2',
-	'chain_acn': 'cores',
+	'chain_acn': 'asics',
+	'chain_cores': 'cores',
 	'chain_hw': 'hwerrors',
 	'chain_hwrate': 'hwerrorsrate',
 };
+
+var fieldsRenameChain = {
+	'freq_desc': 'frequency_desc',
+	'chain_acs': 'acs',
+};
+
 var sumFieldsBmminer = {
 	//'ratechip': listSum,
 	'rateideal': listSum,
 	//'frequency': listAvg,
 	'temp1': listMax,
 	'temp2': listMax,
+	'asics': listSum,
 	'cores': listSum,
 	'hwerrors': listSum,
 	'hwerrorsrate': listSum,
@@ -305,6 +319,15 @@ function transcribeApiCommon(json, out)
 	out.fanctrl.ModeStr = mode;
 }
 
+function transcribeApiCommonFixup(json, out)
+{
+	var tabStats = out.stats;
+	var sum = tabStats.Accepted + tabStats.Rejected;
+	if (sum > 0) {
+		tabStats.RejectedPerc = tabStats.Rejected / sum * 100;
+	}
+}
+
 function transcribeApiBmminer(json, out)
 {
 	/* parse chains */
@@ -317,17 +340,20 @@ function transcribeApiBmminer(json, out)
 			var outChain = {
 				ID: i,
 			};
-			for (key in fieldsRenameChain) {
-				var as = fieldsRenameChain[key];
+			/* parse numerical elements */
+			for (key in fieldsRenameChainNum) {
+				var as = fieldsRenameChainNum[key];
 				var val = reqStats[key + i];
 				outChain[as] = parseFloat(val);
 			}
 
-			/* parse (non-numerical) freq description */
-			var desc = reqStats['freq_desc' + i];
-			if (typeof(desc) == "string")
-				outChain['frequency_desc'] = desc;
-
+			/* parse non-numerical elements */
+			for (key in fieldsRenameChain) {
+				var as = fieldsRenameChain[key];
+				var val = reqStats[key + i];
+				if (typeof(val) == "string")
+					outChain[as] = val;
+			}
 			outChains.push(outChain);
 		}
 	}
@@ -396,6 +422,7 @@ function transcribeApi(json)
 	} else {
 		transcribeApiCgminer(json, out);
 	}
+	transcribeApiCommonFixup(json, out);
 	return out;
 }
 
@@ -561,9 +588,25 @@ function drawGraphs(state, bundles)
  */
 
 function formatfix(n) { return function (x) { return x ? x.toFixed(n) : x; }; }
-function formatfixsuf(n,suf) { return function (x) { return x.toFixed(n) + suf; }; }
+function formatfixsuf(n,suf) { return function (x) { return x ? x.toFixed(n) + suf : x; }; }
 function formattemp(n) { return formatfixsuf(n, ' &deg;C'); }
 function formatyesno(v) { return v ? "yes" : "no"; }
+function formatsec(sec) {
+	if (!sec) return sec;
+	var day = 24 * 3600;
+	var days = (sec / day) | 0;
+	sec -= days * day;
+	var hours = (sec / 3600) | 0;
+	sec -= hours * 3600;
+	var min = (sec / 60) | 0;
+	sec -= min * 60;
+
+	var t = '';
+	if (days > 0) t += days + ' days ';
+	t += hours + ':' + zeroPad(min, 2) + ':' + zeroPad(sec, 2);
+
+	return t;
+}
 
 var fieldsSummary = [
 	{
@@ -589,15 +632,45 @@ var fieldsSummary = [
 	},
 	{
 		key: 'Found Blocks',
+		name: 'Found',
+		desc: 'Found Blocks',
 		graph: true,
 	},
 	{
 		key: 'Accepted',
+		name: 'Acc',
+		desc: 'Accepted shares',
+		graph: true,
+	},
+	{
+		key: 'Difficulty Accepted',
+		name: 'Diff#A',
+		desc: 'Difficulty Accepted',
 		graph: true,
 	},
 	{
 		key: 'Rejected',
+		name: 'Rej',
+		desc: 'Rejected shares',
 		graph: true,
+	},
+	{
+		key: 'Difficulty Rejected',
+		name: 'Diff#R',
+		desc: 'Difficulty Rejected',
+		graph: true,
+	},
+	{
+		key: 'RejectedPerc',
+		name: 'Rej. %',
+		graph: true,
+		desc: 'Ratio of rejected shares to all submitted shares (in percent)',
+		format: formatfixsuf(3, '%'),
+	},
+	{
+		key: 'Elapsed',
+		name: 'Elapsed',
+		format: formatsec,
 	},
 	{
 		key: 'Hardware Errors',
@@ -607,6 +680,8 @@ var fieldsSummary = [
 	},
 	{
 		key: 'Work Utility',
+		name: 'WU',
+		desc: 'Work Utility',
 		graph: true,
 		format: formatfix(0),
 	},
@@ -627,10 +702,14 @@ var fieldsPool = [
 	},
 	{
 		key: 'Accepted',
+		name: 'Acc',
+		desc: 'Accepted shares',
 		graph: true,
 	},
 	{
 		key: 'Rejected',
+		name: 'Rej',
+		desc: 'Rejected shares',
 		graph: true,
 	},
 /*
@@ -797,9 +876,15 @@ var fieldsChainBmminer = [
 		format: formattemp(0),
 	},
 	{
-		key: 'cores',
+		key: 'asics',
 		name: 'ASIC#',
+		abbr: 'acs',
 		desc: 'Number of ASIC chips on chain',
+	},
+	{
+		key: 'cores',
+		name: 'CORE#',
+		desc: 'Number of cores on chain',
 	},
 	{
 		key: 'hwerrors',
