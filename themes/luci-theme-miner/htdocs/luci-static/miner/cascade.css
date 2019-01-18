@@ -768,7 +768,7 @@ header a {
 	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
-header h3 a:hover, header .brand:hover, header ul .active > a {
+header h3 a:hover, header ul .active > a {
 	background-color: #333;
 	background-color: rgba(255, 255, 255, 0.05);
 	color: #ffffff;
@@ -782,8 +782,9 @@ header h3 {
 header h3 a, header .brand {
 	float: left;
 	display: block;
-	padding: 8px 20px 12px;
-	margin-left: -20px;
+	padding: 10px 20px 10px 0px;
+	margin-top: 0.18em;
+	margin-bottom: 0.18em;
 	color: #ffffff;
 	font-size: 20px;
 	font-weight: 200;
@@ -815,7 +816,7 @@ header .fill {
 header div > ul, .nav {
 	display: block;
 	float: left;
-	margin: 0 10px 0 0;
+	margin: 2px 10px 0 70px;
 	position: relative;
 	left: 0;
 }
@@ -828,7 +829,7 @@ header div > ul > li, .nav > li {
 header div > ul a, .nav a {
 	display: block;
 	float: none;
-	padding: 10px 10px 11px;
+	padding: 14px 10px 11px;
 	line-height: 19px;
 	text-decoration: none;
 }
@@ -1978,5 +1979,5 @@ td.cbi-value-field var {
 	border: none;
 }
 #braiins-logo {
-	width: 7em;
+	width: 5.7em;
 }
