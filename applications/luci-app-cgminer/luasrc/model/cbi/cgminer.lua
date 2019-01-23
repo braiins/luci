@@ -515,13 +515,13 @@ if IS_AM1_MINER then
 
 	o = s:option(Flag, "asicboost", translate("ASIC Boost Enable"))
 
-	o = s:option(Flag, "overclock-enable", translate("Enable overclocking"))
+	o = s:option(Flag, "overclock-enable", translate("Enable frequency scaling"))
 
 	o = s:option(DummyValue, "_note3", " ")
 	o:depends("overclock-enable", "1")
 	o.default = [[
-		Overclocking enables you to scale frequency by a constant
-		multiplier. If your frequency is 650 MHz then multiplier of 1 keeps frequency as it is (650 MHz),
+		Frequency scaling enables you to overclock or underclock by a constant
+		factor. If your frequency is 650 MHz then multiplier of 1 keeps frequency as it is (650 MHz),
 		1.05 overclocks frequency by 5% (682.5 MHz) and multiplier 0.93 underclocks frequency by 7% (604.5 MHz).
 
 		If you override frequencies in chain configuration bellow,
@@ -537,7 +537,7 @@ if IS_AM1_MINER then
 	]]
 
 
-	o = s:option(Value, "overclock", translate("Overclocking multiplier"))
+	o = s:option(Value, "overclock", translate("Frequency scaling multiplier"))
 	o:depends("overclock-enable", "1")
 	o.datatype = "range(0.01,2)"
 	o.default = '1.00'
