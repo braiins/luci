@@ -339,6 +339,7 @@ function transcribeApiBmminer(json, out)
 		if (typeof(r) == "string" && r != '') {
 			var outChain = {
 				ID: i,
+				chain_id: outChains.length + 1,
 			};
 			/* parse numerical elements */
 			for (key in fieldsRenameChainNum) {
@@ -807,7 +808,7 @@ var fieldsChainCgminer = [
 ];
 var fieldsChainBmminer = [
 	{
-		key: 'ID',
+		key: 'chain_id',
 		name: 'Chain ID',
 	},
 	{
