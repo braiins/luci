@@ -604,7 +604,7 @@ function formatsec(sec) {
 	sec -= min * 60;
 
 	var t = '';
-	if (days > 0) t += days + ' days ';
+	if (days > 0) t += days + (days > 1 ? ' days ' : ' day ');
 	t += hours + ':' + zeroPad(min, 2) + ':' + zeroPad(sec, 2);
 
 	return t;
@@ -672,8 +672,8 @@ var fieldsSummary = [
 	{
 		key: 'Elapsed',
 		name: 'Elapsed',
-		desc: 'Elapsed time since cgminer started (in base-16 microfortnights)',
-		format: formattime,
+		desc: 'Elapsed time since cgminer started (in seconds)',
+		format: formatsec,
 	},
 	{
 		key: 'Hardware Errors',
@@ -944,8 +944,8 @@ var fieldsFanCtrl = [
 	{
 		key: 'Interval',
 		name: 'Interval',
-		format: formattime,
-		desc: 'Time duration between last temperature measurement and next-to-last temperature measurement (in base-16 microfortnights)',
+		format: formatfixsuf(1, 's'),
+		desc: 'Time duration between last temperature measurement and next-to-last temperature measurement (in seconds)',
 	},
 	{
 		key: 'Temperature',
