@@ -39,9 +39,8 @@ local IS_AM1_MINER = MINER_MODEL == 'am1-s9'
 -- TODO: lookup what string does T1 miner USE
 local IS_T1_MINER = not IS_AM1_MINER
 
-local DEFAULT_TEMPERATURE_S9 = 75
-local DEFAULT_TEMPERATURE_T1 = 90
-local DEFAULT_TEMPERATURE = IS_AM1_MINER and DEFAULT_TEMPERATURE_S9 or DEFAULT_TEMPERATURE_T1
+local DEFAULT_TEMPERATURE = IS_AM1_MINER and 75 or 89
+local MAX_TEMPERATURE = IS_AM1_MINER and 90 or 95
 local DEFAULT_FAN_SPEED = 100
 
 local function copy_table_into_table(dest, source)
@@ -487,7 +486,7 @@ end
 
 o = s:option(Value, "fan-temp", translate("Target temperature &deg;C"))
 o:depends("fan-ctrl", "temp")
-o.datatype = "range(30,95)"
+o.datatype = ("and(uinteger,min(1),max(%d))"):format(MAX_TEMPERATURE)
 o.default = DEFAULT_TEMPERATURE
 
 o = s:option(DummyValue, "_note2", " ")
@@ -504,7 +503,7 @@ o.default = [[
 
 o = s:option(Value, "fan-speed", translate("Target fan speed %"))
 o:depends("fan-ctrl", "speed")
-o.datatype = "range(0,100)"
+o.datatype = "and(uinteger,min(0),max(100))"
 o.default = DEFAULT_FAN_SPEED
 
 
@@ -540,7 +539,7 @@ if IS_AM1_MINER then
 
 	o = s:option(Value, "overclock", translate("Overclocking multiplier"))
 	o:depends("overclock-enable", "1")
-	o.datatype = "range(0,2)"
+	o.datatype = "range(0.01,2)"
 	o.default = '1.00'
 
 	s = m:section(TypedSection, "chainconfigs9", translate("Chain Configuration"),
@@ -557,7 +556,7 @@ if IS_AM1_MINER then
 
 	o = s:option(Value, "frequency", translate("Frequency (MHz)"))
 	o:depends("frequency_override", "1")
-	o.datatype = "range(100,1175)"
+	o.datatype = "and(uinteger,min(100),max(1175))"
 	o.placeholder = DEFAULT_FREQUENCY_S9
 	o.default = DEFAULT_FREQUENCY_S9
 
@@ -589,13 +588,13 @@ elseif IS_T1_MINER then
 
 	o = s:option(Value, "frequency", translate("Frequency (MHz)"),
 		translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
-	o.datatype = "range(120,1332)"
+	o.datatype = "and(uinteger,min(120),max(1332))"
 	o.placeholder = DEFAULT_FREQUENCY
 	o.default = DEFAULT_FREQUENCY
 
 	o = s:option(Value, "voltage", translate("Voltage (Level)"),
 		translate("The lower VID value means the higher voltage and higher power consumption."))
-	o.datatype = "range(10,15)"
+	o.datatype = "and(uinteger,min(10),max(15))"
 	o.placeholder = DEFAULT_VOLTAGE
 	o.default = DEFAULT_VOLTAGE
 
