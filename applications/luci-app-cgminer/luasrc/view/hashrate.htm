@@ -1217,6 +1217,21 @@ function updateTablesNoData(state, isDead)
 		else
 			state.datasets[id].pushLast();
 	}
+	/* clear all fields */
+	if (isDead && state.lastData) {
+		var data = state.lastData;
+		tables.forEach(
+			function (def) {
+				for (var i = 0; i < def.nrowsGet(data); i++) {
+					var row = def.rowGet(data, i);
+					def.getFields(data).forEach(function (field) {
+						var id = makeId(def.prefix, field.key, i);
+						setId(id, undefined);
+					});
+				}
+			}
+		);
+	}
 }
 
 function doRequest(state)
@@ -1293,6 +1308,7 @@ function runPageTick(state)
 		} else {
 			var data = transcribeApi(state.json);
 			updateTables(state, data);
+			state.lastData = data;
 			state.deadForMs = 0;
 			setStatus('OK');
 			state.lastPID = null;
