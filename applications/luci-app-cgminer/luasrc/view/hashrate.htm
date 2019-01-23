@@ -592,6 +592,7 @@ function formatfix(n) { return function (x) { return x ? x.toFixed(n) : x; }; }
 function formatfixsuf(n,suf) { return function (x) { return x ? x.toFixed(n) + suf : x; }; }
 function formattemp(n) { return formatfixsuf(n, ' &deg;C'); }
 function formatyesno(v) { return v ? "yes" : "no"; }
+function formattime(sec) { return ((sec/1.2096)|0).toString(16).toUpperCase(); }
 function formatsec(sec) {
 	if (!sec) return sec;
 	var day = 24 * 3600;
@@ -671,7 +672,8 @@ var fieldsSummary = [
 	{
 		key: 'Elapsed',
 		name: 'Elapsed',
-		format: formatsec,
+		desc: 'Elapsed time since cgminer started (in base-16 microfortnights)',
+		format: formattime,
 	},
 	{
 		key: 'Hardware Errors',
@@ -694,23 +696,26 @@ var fieldsPool = [
 	},
 	{
 		key: 'URL',
+		desc: 'Uniform Resource Locator of pool',
 	},
 	{
 		key: 'User',
+		desc: 'A unique sequence of characters used to identify a user and allow access to pool',
 	},
 	{
 		key: 'Status',
+		desc: 'Current status of pool. Possible values are: Alive, Sick, Dead, NoStart, Initialising or Unknown',
 	},
 	{
 		key: 'Accepted',
 		name: 'Acc',
-		desc: 'Accepted shares',
+		desc: 'Number of accepted shares',
 		graph: true,
 	},
 	{
 		key: 'Rejected',
 		name: 'Rej',
-		desc: 'Rejected shares',
+		desc: 'Number of rejected shares',
 		graph: true,
 	},
 /*
@@ -722,14 +727,17 @@ var fieldsPool = [
 	{
 		key: 'Stale',
 		graph: true,
+		desc: 'Number of stale shares (shares that were sent after a block was already solved)',
 	},
 	{
 		key: 'LastDiff',
 		graph: true,
+		desc: 'Difficulty of last work that was assigned by pool',
 		format: formatfix(0),
 	},
 	{
-		key: 'Asic Boost',
+		key: 'ASIC Boost',
+		desc: 'Does pool support ASIC boost? (in boolean)',
 		format: formatyesno,
 	},
 ];
@@ -925,17 +933,19 @@ var fieldsFanCtrl = [
 		key: 'TargetTemp',
 		name: 'Target Temp',
 		format: formattemp(0),
+		desc: 'If mode is automatic mode, this is the target temperature it is trying to reach (in degree Celsius)',
 	},
 	{
 		key: 'TargetPwm',
 		name: 'Target Speed',
 		format: formatfixsuf(0, '%'),
+		desc: 'If mode is fixed speed, this is the target fan speed (in percent)',
 	},
 	{
 		key: 'Interval',
 		name: 'Interval',
-		format: formatfixsuf(1, ' sec'),
-		desc: 'How often is temperature measure in seconds',
+		format: formattime,
+		desc: 'Time duration between last temperature measurement and next-to-last temperature measurement (in base-16 microfortnights)',
 	},
 	{
 		key: 'Temperature',
