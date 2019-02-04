@@ -56,6 +56,8 @@ var KEEP_HISTORY_SEC = DRAW_HISTORY_SEC * 1.2;
  * Utility functions
  */
 
+var eps = 1e-6;
+
 function mod0(x, y) {
 	return (x % y + y) % y;
 }
@@ -609,6 +611,12 @@ function formatsec(sec) {
 
 	return t;
 }
+function comb_zerotoundef(fn)
+{
+	return function (x) {
+		return fn(Math.abs(x) <= eps ? undefined : x);
+	};
+}
 
 var fieldsSummary = [
 	{
@@ -616,21 +624,21 @@ var fieldsSummary = [
 		name: 'Gh/s 1m',
 		graph: true,
 		desc: 'Average hashrate (1 minute window, Gh/s)',
-		format: formatfix(2),
+		format: comb_zerotoundef(formatfix(2)),
 	},
 	{
 		key: 'Hashrate15m',
 		name: 'Gh/s 15m',
 		graph: true,
 		desc: 'Average hashrate (15 minute window, Gh/s)',
-		format: formatfix(2),
+		format: comb_zerotoundef(formatfix(2)),
 	},
 	{
 		key: 'Hashrate24h',
 		name: 'Gh/s 24h',
 		graph: true,
 		desc: 'Average hashrate (24 hour window, Gh/s)',
-		format: formatfix(2),
+		format: comb_zerotoundef(formatfix(2)),
 	},
 	{
 		key: 'Found Blocks',
@@ -1178,7 +1186,7 @@ function updateTable(state, def, data)
 			var id = makeId(def.prefix, field.key, i);
 			var val = row[field.key];
 			var show = val;
-			if (val && field.format)
+			if (field.format)
 				show = field.format(show, row);
 			setId(id, show);
 			if (field.abbr) {
