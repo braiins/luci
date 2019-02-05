@@ -588,13 +588,13 @@ elseif IS_T1_MINER then
 
 	o = s:option(Value, "frequency", translate("Frequency (MHz)"),
 		translate("If you want to try overclock frequency, you usually need to adjust VID to be lower."))
-	o.datatype = "and(uinteger,min(120),max(1332))"
+	o.datatype = "and(uinteger,min(120),max(1596))"
 	o.placeholder = DEFAULT_FREQUENCY
 	o.default = DEFAULT_FREQUENCY
 
 	o = s:option(Value, "voltage", translate("Voltage (Level)"),
 		translate("The lower VID value means the higher voltage and higher power consumption."))
-	o.datatype = "and(uinteger,min(10),max(15))"
+	o.datatype = "and(uinteger,min(1),max(31))"
 	o.placeholder = DEFAULT_VOLTAGE
 	o.default = DEFAULT_VOLTAGE
 
