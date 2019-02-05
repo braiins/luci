@@ -1231,12 +1231,14 @@ function updateTablesNoData(state, isDead)
 		var data = state.lastData;
 		tables.forEach(
 			function (def) {
-				for (var i = 0; i < def.nrowsGet(data); i++) {
-					var row = def.rowGet(data, i);
-					def.getFields(data).forEach(function (field) {
-						var id = makeId(def.prefix, field.key, i);
-						setId(id, undefined);
-					});
+				if (isTableOk(data, def)) {
+					for (var i = 0; i < def.nrowsGet(data); i++) {
+						var row = def.rowGet(data, i);
+						def.getFields(data).forEach(function (field) {
+							var id = makeId(def.prefix, field.key, i);
+							setId(id, undefined);
+						});
+					}
 				}
 			}
 		);
