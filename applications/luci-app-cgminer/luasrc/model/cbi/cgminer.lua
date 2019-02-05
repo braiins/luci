@@ -143,6 +143,10 @@ returning the whole dictionary and not just an element of it.
 
 ]]
 
+function is_num(x)
+	return type(tonumber(x)) == 'number'
+end
+
 local obj_handlers = {
 	pool = {
 		get = function (json, id, key)
@@ -181,19 +185,28 @@ local obj_handlers = {
 			json[key] = val
 		end,
 		load_fixup = function (json)
-			json['fan-ctrl-enabled'] = json['fan-ctrl'] and '1' or '0'
+			local ctrl = json['fan-ctrl']
+			json['fan-ctrl-enabled'] = (ctrl == 'temp' or ctrl == 'speed') and '1' or '0'
 		end,
 		save_fixup = function (json)
-			if json['fan-ctrl-enabled'] ~= '1' then
+			local ok = false
+			if json['fan-ctrl-enabled'] == '1' then
+				if json['fan-ctrl'] == 'temp' then
+					if is_num(json['fan-temp']) then
+						ok = true
+						json['fan-speed'] = nil
+					end
+				elseif json['fan-ctrl'] == 'speed' then
+					if is_num(json['fan-speed']) then
+						ok = true
+						json['fan-temp'] = nil
+					end
+				end
+			end
+			if not ok then
 				json['fan-ctrl'] = nil
 				json['fan-temp'] = nil
 				json['fan-speed'] = nil
-			end
-			local mode = json['fan-ctrl']
-			if mode == 'temp' then
-				json['fan-speed'] = nil
-			else
-				json['fan-temp'] = nil
 			end
 			json['fan-ctrl-enabled'] = nil
 		end,
@@ -216,10 +229,14 @@ local am1_handlers = {
 			end
 		end,
 		load_fixup = function (json)
-			json['overclock-enable'] = json['overclock'] and '1' or '0'
+			json['overclock-enable'] = is_num(json['overclock']) and '1' or '0'
 		end,
 		save_fixup = function (json)
-			if json['overclock-enable'] ~= '1' then
+			local ok = false
+			if json['overclock-enable'] == '1' and is_num(json['overclock']) then
+				ok = true
+			end
+			if not ok then
 				json['overclock'] = nil
 			end
 			json['overclock-enable'] = nil
@@ -571,7 +588,9 @@ if IS_AM1_MINER then
 	local factor = 1
 	if m:get("miners9", "overclock-enable") == '1' then
 		local overclock = m:get("miners9", "overclock")
-		factor = tonumber(overclock)
+		if is_num(overclock) then
+			factor = tonumber(overclock)
+		end
 	end
 	o = s:option(DummyValue, "recommended_voltage", translate("Recommended voltage"))
 	function o.cfgvalue(self, section)
