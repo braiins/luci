@@ -187,7 +187,7 @@
 							<span class="label success" id="xhr_poll_status_on"><%:Auto Refresh%> <%:on%></span>
 							<span class="label" id="xhr_poll_status_off" style="display:none"><%:Auto Refresh%> <%:off%></span>
 						</span>
-						<%- if fs.access('/tmp/bos_upgrade') then -%>
+						<%- if (fs.stat("/tmp/bos_upgrade", "size") or 0) > 1 then -%>
 							<form method="post" class="inline" action="/cgi-bin/luci/admin/system/packages">
 								<input type="hidden" name="exec" value="1" />
 								<input type="hidden" name="token" value="<%=token%>" />
