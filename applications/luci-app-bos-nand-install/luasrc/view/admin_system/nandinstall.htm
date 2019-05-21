@@ -1,0 +1,27 @@
+<%#
+ Copyright (C) 2018  Braiins Systems s.r.o.
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+
+<h2 name="content"><%:Install Current System to Device (NAND)%></h2>
+
+<fieldset class="cbi-section">
+	<fieldset class="cbi-section">
+		<div class="cbi-section-descr"><%:Currently, the system is running from SD card. This operation writes Braiins OS permanently to miner NAND memory.%></div>
+		<div class="cbi-section-node">
+			<form class="inline" method="post" action="<%=url('admin/system/nandinstall/install')%>">
+				<div class="cbi-value cbi-value-last">
+					<label class="cbi-value-title" for="archive"><%:Perform installation%>:</label>
+					<div class="cbi-value-field">
+						<input type="hidden" name="token" value="<%=token%>" />
+						<input type="submit" class="cbi-button cbi-input-apply" name="install" value="<%:Install...%>" onclick="return window.confirm('<%:Are you sure you want to install Braiins OS to the device (NAND)?%>');" />
+					</div>
+				</div>
+			</form>
+		</div>
+	</fieldset>
+</fieldset>
+
+<%+footer%>

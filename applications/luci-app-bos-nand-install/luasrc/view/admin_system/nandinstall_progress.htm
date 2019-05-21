@@ -1,0 +1,98 @@
+<%#
+ Copyright (C) 2018  Braiins Systems s.r.o.
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+
+<h2 name="content"><%:Installation of Current System to Device (NAND)%></h2>
+
+<style>
+.iconbox { display: table; }
+.iconbox span { display: table-cell; vertical-align: middle; }
+.icon.red { font-size: 400%; color: red; }
+.icon.green { font-size: 400%; color: green; }
+.icon img { margin-right: 1em; }
+</style>
+
+<fieldset class="cbi-section">
+	<textarea readonly="readonly" wrap="off" rows="1" style="width:100%" id="upgrade-stdout"><%:Waiting for progress...%></textarea>
+</fieldset>
+<fieldset class="cbi-section">
+	<div id="upgrade-status"></div>
+	<script type="text/javascript">//<![CDATA[
+		var progress_xhr = new XHR();
+		var cur_line = 0;
+		var old_state = '';
+		var request_timeout = null;
+		var CONNECTION_TIMEOUT_MS = 500;
+		function update_icon(state) {
+			if (state == old_state)
+				return;
+			old_state = state;
+			var status_el = document.getElementById('upgrade-status');
+			switch (state) {
+				case 'succeeded':
+					status_el.innerHTML = '<div class="iconbox"><span class="green icon">✓</span><span>Operation succeeded</span>';
+					/*
+					var audio = new Audio('<%=resource%>/tada.wav');
+					audio.pause();
+					audio.play();
+					*/
+					break;
+				case 'failed':
+					status_el.innerHTML = '<div class="iconbox"><span class="red icon">❌</span><span>Operation failed</span>';
+					break;
+				case 'timeout':
+				case 'in progress':
+					var snip = '<div class="iconbox"><span class="icon"><img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>"></span><span>';
+					if (state == 'timeout')
+						snip += '<%:Connection to miner timed out...%>';
+					else
+						snip += '<%:Waiting for command to complete...%>';
+					snip += '</span></div>';
+					status_el.innerHTML = snip;
+					break;
+			}
+		}
+		function dotimeout() {
+			update_icon('timeout');
+		}
+		function clearreqtimeout() {
+			if (request_timeout !== null)
+				clearTimeout(request_timeout);
+			request_timeout = null;
+		}
+		function setreqtimeout() {
+			clearreqtimeout();
+			request_timeout = window.setTimeout(dotimeout, CONNECTION_TIMEOUT_MS);
+		}
+
+		function dorequest() {
+			XHR.get('<%=url('admin/system/nandinstall/progress')%>', null,
+				function(x, data)
+				{
+					clearreqtimeout();
+					var stop = false;
+					var e = document.getElementById('upgrade-stdout');
+					if (e && data && data.status == 'ok') {
+						update_icon(data.operation);
+						if (data.operation == 'failed' || data.operation == 'succeeded')
+							stop = true;
+						while (cur_line < data.lines.length) {
+							if (cur_line == 0)
+								e.innerHTML = '';
+							e.value += data.lines[cur_line++] + '\n';
+							e.rows++;
+						}
+					}
+					if (!stop)
+						window.setTimeout(dorequest, 1000);
+				}
+			);
+			setreqtimeout();
+		}
+		dorequest();
+	//]]></script>
+</fieldset>
+<%+footer%>
