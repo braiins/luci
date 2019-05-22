@@ -17,16 +17,21 @@ Author: Libor Vasicek <libor.vasicek@braiins.cz>
 
 module("luci.controller.cgminer", package.seeall)
 
+nixio = require 'nixio'
+
 function index()
 	entry({"admin", "services", "cgminer"}, cbi("cgminer"), _("CGMiner"))
 	entry({"admin", "status", "miner"}, template("hashrate"), _("Miner"), 90)
 	entry({"admin", "status", "miner", "api_status"}, call("action_devs")).leaf = true
+	entry({"admin", "status", "miner", "clear_error"}, call("action_clear_error")).leaf = true
 end
 
 local socket = require "socket"
 local HOST = "127.0.0.1"
 local PORT = 4028
 local util = require "luci.util"
+local SAVE_LAST_QUIT_FILE = "/tmp/cgminer_quit_reason"
+
 
 local function go_in(t, ...)
 	for _, k in ipairs({...}) do
@@ -85,18 +90,44 @@ local function look_for_cgminer()
 	end
 end
 
+function get_last_quit()
+	local stat = nixio.fs.stat(SAVE_LAST_QUIT_FILE)
+	if not stat then
+		return nil
+	end
+	local f = io.open(SAVE_LAST_QUIT_FILE, 'r')
+	if not f then
+		return nil
+	end
+	local msg = f:read('*l')
+	f:close()
+
+	return {
+		msg = msg,
+		mtime = stat.mtime,
+	}
+end
+
 function action_devs()
 	luci.http.prepare_content("application/json")
+
+	local reply = nil
 
 	-- query cgminer API and pass the result to application
 	local ok, result = query_cgminer_api('stats+pools+summary+devs+fanctrl')
 	if ok then
-		-- write it to the http output
-		luci.http.write(result)
-		-- we are done here
-		return
+		reply = luci.jsonc.parse(result)
+		assert(reply)
+	else
+		reply = look_for_cgminer()
 	end
+	reply.last_quit = get_last_quit()
 	-- look for cgminer process
-	local reason = look_for_cgminer()
-	luci.http.write(luci.jsonc.stringify(reason))
+	luci.http.write(luci.jsonc.stringify(reply))
+end
+
+function action_clear_error()
+	nixio.fs.unlink(SAVE_LAST_QUIT_FILE)
+	luci.http.prepare_content("application/json")
+	luci.http.write(luci.jsonc.stringify({}))
 end

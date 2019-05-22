@@ -19,7 +19,11 @@ table.stats { width: auto; margin-top: 1en; border: none; }
 	</style>
 
 <h1>Miner Status<span id="what"></span></h1>
-<p>API connection status: <span id="status">Connecting...</span></p>
+<p>API connection status: <code id="status">Connecting...</code></p>
+<p id="lastQuit" style="display:none">Last cgminer quit reason:
+<code id="lastQuitMsg"></code> (<span id="lastQuitAgo"></span>,
+<a id="clearQuit" href="#">clear reason</a>)
+</p>
 
 <embed id="hashrate-svg" style="width:100%; height:300px; border:1px solid #000000; background-color:#FFFFFF" src="/luci-static/resources/miner_graph.svg">
 
@@ -489,10 +493,22 @@ function setAbbr(name, value)
 	e.title = value;
 }
 
+function setIdText(name, value)
+{
+	var e = document.getElementById(name);
+	e.innerText = value === undefined ? '-' : value;
+}
+
 function setId(name, value)
 {
 	var e = document.getElementById(name);
 	e.innerHTML = value === undefined ? '-' : value;
+}
+
+function setVisible(name, isVisible)
+{
+	var e = document.getElementById(name);
+	e.style.display = isVisible ? 'block' : 'none';
 }
 
 function setHighlighted(name, on)
@@ -508,6 +524,27 @@ function setStatus(text)
 {
 	setId('status', text);
 }
+
+function setNoLastQuit()
+{
+	setVisible('lastQuit', false);
+}
+
+function setLastQuit(text, mtime, clearFn)
+{
+	var utcNow = ~~(+new Date() / 1000);
+	var timeDiff = utcNow - mtime;
+
+	setIdText('lastQuitMsg', text);
+	setIdText('lastQuitAgo', formatsec(timeDiff));
+	document.getElementById("clearQuit").onclick = function() {
+		clearFn();
+		setNoLastQuit();
+		return false;
+	};
+	setVisible('lastQuit', true);
+}
+
 
 function initGraph(state)
 {
@@ -1323,6 +1360,19 @@ function runPageTick(state)
 			state.deadForMs = 0;
 			setStatus('OK');
 			state.lastPID = null;
+		}
+		var lastQuit = state.json.last_quit;
+		if (lastQuit && lastQuit.mtime != state.hideLastQuitMtime) {
+			var clearFn = function () {
+				state.hideLastQuitMtime = lastQuit.mtime;
+				XHR.get('<%=build_url("admin/status/miner/clear_error")%>',
+					null,
+					function(x, json) { }
+				);
+			};
+			setLastQuit(lastQuit.msg, lastQuit.mtime, clearFn);
+		} else {
+			setNoLastQuit();
 		}
 	} else {
 		state.deadForMs += PAGE_TICK_DURATION_MS;
