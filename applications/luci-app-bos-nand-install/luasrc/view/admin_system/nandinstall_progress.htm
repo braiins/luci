@@ -13,10 +13,14 @@
 .icon.red { font-size: 400%; color: red; }
 .icon.green { font-size: 400%; color: green; }
 .icon img { margin-right: 1em; }
+.console {
+	width: 100%;
+	overflow-y: scroll;
+}
 </style>
 
 <fieldset class="cbi-section">
-	<textarea readonly="readonly" wrap="off" rows="1" style="width:100%" id="upgrade-stdout"><%:Waiting for progress...%></textarea>
+	<textarea class="console" readonly="readonly" rows="25" id="upgrade-stdout"><%:Waiting for progress...%></textarea>
 </fieldset>
 <fieldset class="cbi-section">
 	<div id="upgrade-status"></div>
@@ -74,16 +78,20 @@
 				{
 					clearreqtimeout();
 					var stop = false;
-					var e = document.getElementById('upgrade-stdout');
-					if (e && data && data.status == 'ok') {
+					var textarea = document.getElementById('upgrade-stdout');
+					if (textarea && data && data.status == 'ok') {
 						update_icon(data.operation);
 						if (data.operation == 'failed' || data.operation == 'succeeded')
 							stop = true;
+						var added = 0;
 						while (cur_line < data.lines.length) {
 							if (cur_line == 0)
-								e.innerHTML = '';
-							e.value += data.lines[cur_line++] + '\n';
-							e.rows++;
+								textarea.innerHTML = '';
+							textarea.value += data.lines[cur_line++] + '\n';
+							added++;
+						}
+						if (added > 0) {
+							textarea.scrollTop = textarea.scrollHeight;
 						}
 					}
 					if (!stop)
