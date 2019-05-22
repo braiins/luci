@@ -629,7 +629,7 @@ function drawGraphs(state, bundles)
 
 function formatfix(n) { return function (x) { return x ? x.toFixed(n) : x; }; }
 function formatfixsuf(n,suf) { return function (x) { return x ? x.toFixed(n) + suf : x; }; }
-function formattemp(n) { return formatfixsuf(n, ' &deg;C'); }
+function formattemp(n) { return formatfixsuf(n, ' °C'); }
 function formatyesno(v) { return v ? "yes" : "no"; }
 function formattime(sec) { return ((sec/1.2096)|0).toString(16).toUpperCase(); }
 function formatsec(sec) {
@@ -895,6 +895,7 @@ var fieldsChainBmminer = [
 		name: 'Frequency',
 		desc: 'Average chip frequency on chain (MHz)',
 		abbr: 'frequency_desc',
+		isHtml: true,
 		format: function (x, data) {
 			var desc = data.frequency_desc;
 			if (desc == null) return x;
@@ -1225,7 +1226,10 @@ function updateTable(state, def, data)
 			var show = val;
 			if (field.format)
 				show = field.format(show, row);
-			setId(id, show);
+			if (field.isHtml)
+				setId(id, show);
+			else
+				setIdText(id, show);
 			if (field.abbr) {
 				setAbbr(id, row[field.abbr]);
 			}
