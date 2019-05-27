@@ -19,7 +19,7 @@ table.stats { width: auto; margin-top: 1en; border: none; }
 	</style>
 
 <h1>Miner Status<span id="what"></span></h1>
-<p>API connection status: <code id="status">Connecting...</code></p>
+<p>API connection status: <code id="status">Connecting...</code> <span id="lag"></small></p>
 <p id="lastQuit" style="display:none">Last cgminer quit reason:
 <code id="lastQuitMsg"></code> (<span id="lastQuitAgo"></span>,
 <a id="clearQuit" href="#">clear reason</a>)
@@ -49,6 +49,8 @@ table.stats { width: auto; margin-top: 1en; border: none; }
 var MAX_GRAPHS = 3;
 var PAGE_TICK_DURATION_MS = 1000;
 var PAGE_DEAD_TIMEOUT_MS = 5000;
+var PAGE_REQUEST_TIMEOUT_MS = PAGE_DEAD_TIMEOUT_MS * 0.95;
+var LAG_EMULATOR = false;
 var API_PORT = 4028;
 /* draw last ... seconds of history */
 var DRAW_HISTORY_SEC = 5 * 60;
@@ -520,9 +522,10 @@ function setHighlighted(name, on)
 	e.className = on ? 'highlighted' : '';
 }
 
-function setStatus(text)
+function setStatus(text, lag)
 {
 	setId('status', text);
+	setId('lag', lag === undefined ? "" : lag);
 }
 
 function setNoLastQuit()
@@ -632,6 +635,7 @@ function formatfixsuf(n,suf) { return function (x) { return x ? x.toFixed(n) + s
 function formattemp(n) { return formatfixsuf(n, ' °C'); }
 function formatyesno(v) { return v ? "yes" : "no"; }
 function formattime(sec) { return ((sec/1.2096)|0).toString(16).toUpperCase(); }
+function strplural(s, x) { return s + (x == 1 ? "" : "s" ); }
 function formatsec(sec) {
 	if (!sec) return sec;
 	var day = 24 * 3600;
@@ -1292,9 +1296,10 @@ function doRequest(state)
 	var url = '/cgi-bin/luci/admin/status/miner/api_status';
 	xhr.open('GET', url, true);
 
-	xhr.timeout = PAGE_TICK_DURATION_MS * 0.9;
+	xhr.timeout = PAGE_REQUEST_TIMEOUT_MS;
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4) {
+			state.xhrInProgress = false;
 			state.firstRequest = false;
 			try {
 				state.json = eval('(' + xhr.responseText + ')');
@@ -1304,9 +1309,21 @@ function doRequest(state)
 		}
 	};
 	xhr.ontimeout = function() {
+		state.xhrInProgress = false;
 		console.log("timeout");
 	};
-	xhr.send(null);
+	state.xhrInProgress = true;
+	if (LAG_EMULATOR) {
+		var lag = (Math.random() * 6000) | 0;
+		console.log("making lag " + lag + "ms");
+		if (lag >= PAGE_REQUEST_TIMEOUT_MS) {
+			setTimeout(function () { xhr.ontimeout(null); }, PAGE_REQUEST_TIMEOUT_MS);
+		} else {
+			setTimeout(function () { xhr.send(null); }, lag);
+		}
+	} else {
+		xhr.send(null);
+	}
 }
 
 function redrawGraphs(state)
@@ -1384,7 +1401,12 @@ function runPageTick(state)
 
 		updateTablesNoData(state, dead);
 		if (!state.firstRequest) {
-			setStatus(dead ? "Can't connect to miner" : 'Stalled');
+			if (dead) {
+				setStatus("Can't connect to miner");
+			} else {
+				var lag = Math.round(state.deadForMs / 1000);
+				setStatus("OK", '(lag ' + lag + ' ' + strplural('second', lag) + ')');
+			}
 		}
 	}
 
@@ -1392,7 +1414,14 @@ function runPageTick(state)
 	state.json = null;
 
 	/* make new request */
-	doRequest(state);
+	/* If old request is still in progress, wait for it to either
+	 * finish or timeout before we issue new one.
+	 * This helps when connection is laggy, but it results in samples
+	 * being repeated on ticks with no responses.
+	 */
+	if (!state.xhrInProgress) {
+		doRequest(state);
+	}
 	redrawGraphs(state);
 }
 
@@ -1409,6 +1438,7 @@ function initPage(svg, svgDoc)
 		currentGraphs: [],
 		currentGraphsAnnot: '',
 		firstRequest: true,
+		xhrInProgress: false,
 	};
 
 	initGraph(globalState);
