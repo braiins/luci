@@ -1,0 +1,51 @@
+<%#
+ Copyright (C) 2019  Braiins Systems s.r.o.
+
+ This file is part of Braiins Open-Source Initiative (BOSI).
+
+ BOSI is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ Please, keep in mind that we may also license BOSI or any part thereof
+ under a proprietary license. For more information on the terms and conditions
+ of such proprietary license or if you have any other questions, please
+ contact us at opensource@braiins.com.
+-%>
+
+<%
+	local hostname = luci.sys.hostname() or "HOSTNAME"
+-%>
+
+<%+header%>
+
+<h2 name="content"><%:bOSminer preview%></h2>
+
+<p><%:This is a combo preview of the new bitcoin mining software (bOSminer) and a demo of the new binary mining protocol (Stratum V2).%></p>
+<p><%:The prototype has limited capabilities:%></p>
+<ul>
+  <li><%:it only uses 1 hashboard of the S9%></li>
+  <li><%:it doesn't have an API%></li>
+  <li><%:AsicBoost is enabled by default, it can be turned off by%> <em>--disable-asic-boost</em></li>
+</ul>
+<p><%:How to run it:%></p>
+<pre>ssh root@<%=hostname%>
+root@<%=hostname%>:~# bosminer [FLAGS] --pool &lt;HOSTNAME:PORT&gt; --user &lt;USERNAME.WORKERNAME&gt;</pre>
+<p><%:Full options:%></p>
+<pre>bosminer -h</pre>
+<p><%:You can connect the miner to our Stratum V2 endpoint:%></p>
+<pre>bosminer --pool v2.stratum.slushpool.com:3337 --user &lt;USERNAME.WORKERNAME&gt;</pre>
+<p><%:If you want to connect the miner to your own pool, you have to run a V2%>&rarr;<%:V1 translating proxy locally. To compile and install the proxy, please follow these instructions:%></p>
+<p><a href="https://github.com/braiins/braiins/blob/bos-devel/open/stratum-proxy">https://github.com/braiins/braiins/blob/bos-devel/open/stratum-proxy</a></p>
+<p><%:Follow the development on%> <a href="https://github.com/braiins/braiins">https://github.com/braiins/braiins</a></p>
+
+<%+footer%>
