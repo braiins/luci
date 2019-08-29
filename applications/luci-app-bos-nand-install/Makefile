@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=LuCI Support for Braiins OS NAND install
 LUCI_DEPENDS:=+bos_tools
 
-PKG_MAINTAINER:=Jakub Horak <jakub.horak@braiins.com>
+PKG_MAINTAINER:=Braiins <braiins@braiins.com>
 PKG_LICENSE:=Apache-2.0
 
 include ../../luci.mk

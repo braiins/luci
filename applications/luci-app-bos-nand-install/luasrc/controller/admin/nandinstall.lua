@@ -10,7 +10,7 @@ You may obtain a copy of the License at
 
 	http://www.apache.org/licenses/LICENSE-2.0
 
-Author: Jakub Horak <jakub.horak@braiins.com>
+Author: Braiins <braiins@braiins.com>
 
 ]]--
 module("luci.controller.admin.nandinstall", package.seeall)
