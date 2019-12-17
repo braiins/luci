@@ -28,15 +28,42 @@
 
 <%+header%>
 
-<h2 name="content"><%:bOSminer preview%></h2>
-
-<p><%:This is a combo preview of the new bitcoin mining software (bOSminer) and a demo of the new binary mining protocol (Stratum V2).%></p>
-<p><%:The prototype has limited capabilities:%></p>
+<h2 name="content"><%:Braiins OS with bOSminer Alpha%></h2>
+<p><%:This is an alpha release Braiins OS that replaces cgminer mining software with a new software called bOSminer written from scratch. No web status/configuration features have been implemented yet.%></p>
+<p><%:Current features of the bOSminer alpha include (for details see: %><a href="https://github.com/braiins/braiins/blob/bos-devel/open/bosminer/README.md">README.md</a><%:)%></p>
 <ul>
-  <li><%:it only uses 1 hashboard of the S9%></li>
-  <li><%:it doesn't have an API%></li>
+  <li><%:native Stratum V2 support (no legacy stratum protocol support)%></li>
+  <li><%:support for all 3 hashboards of the S9%></li>
+  <li><%:cgminer compatible read-only API%></li>
   <li><%:AsicBoost is enabled by default, it can be turned off by%> <em>--disable-asic-boost</em></li>
+  <li><%:toml based persistent configuration, default path (/etc/bosminer/bosminer.toml) can be overridden on the command line.%></li>
+  <li><%:fan control - a target temperature can be specified, so that the software will optimally control fan speed to reach the desired temperature. Alternatively, this mechanism can be overridden by a fixed fan speed.%></li>
+  <li><%:temperature monitoring - software periodically monitors temperatures of individual hash chains and issues a warning if temperature exceeds one of the configured levels - see dangerous_temp and hot_temp configuration options. Reaching dangerous_temp level results in miner shutdown%></li>
 </ul>
+<p><%:The following CGMiner commands are recognized and provide useful information:%></p>
+<ul>
+  <li><em>pools</em></li>
+  <li><em>devs</em></li>
+  <li><em>edevs</em></li>
+  <li><em>summary</em></li>
+  <li><em>config</em></li>
+  <li><em>asccount</em></li>
+  <li><em>asc</em></li>
+</ul>
+
+
+<p><%:The following CGMiner commands are recognized but don't provide any useful information:%></p>
+<ul>
+  <li><em>devdetails</em></li>
+  <li><em>stats</em></li>
+  <li><em>estats</em></li>
+  <li><em>coin</em></li>
+  <li><em>lcd</em></li>
+</ul>
+
+<p><%:Example of Reading Pool Statistics:%></p>
+<pre>echo '{"command":"pools"}' | nc <YOUR_MINER_IP> 4028 | jq .</pre>
+
 <p><%:How to run it:%></p>
 <pre>ssh root@<%=hostname%>
 root@<%=hostname%>:~# bosminer [FLAGS] --pool &lt;HOSTNAME:PORT&gt; --user &lt;USERNAME.WORKERNAME&gt;</pre>
