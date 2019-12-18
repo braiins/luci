@@ -40,7 +40,17 @@
   <li><%:fan control - a target temperature can be specified, so that the software will optimally control fan speed to reach the desired temperature. Alternatively, this mechanism can be overridden by a fixed fan speed.%></li>
   <li><%:temperature monitoring - software periodically monitors temperatures of individual hash chains and issues a warning if temperature exceeds one of the configured levels - see dangerous_temp and hot_temp configuration options. Reaching dangerous_temp level results in miner shutdown%></li>
 </ul>
-<p><%:The following CGMiner commands are recognized and provide useful information:%></p>
+<p><%:How to run it:%></p>
+<pre>ssh root@<%=hostname%>
+root@<%=hostname%>:~# bosminer [FLAGS] --pool &lt;HOSTNAME:PORT&gt; --user &lt;USERNAME.WORKERNAME&gt;</pre>
+<p><%:Full options:%></p>
+<pre>bosminer -h</pre>
+<p><%:You can connect the miner to our Stratum V2 endpoint:%></p>
+<pre>bosminer --pool v2.stratum.slushpool.com:3336 --user &lt;USERNAME.WORKERNAME&gt;</pre>
+<p><%:If you want to connect the miner to your own pool, you have to run a V2%>&rarr;<%:V1 translating proxy locally. To compile and install the proxy, please follow these instructions:%></p>
+<p><a href="https://github.com/braiins/braiins/blob/bos-devel/open/stratum-proxy">https://github.com/braiins/braiins/blob/bos-devel/open/stratum-proxy</a></p>
+
+<p><%:The following%> <a href="https://github.com/ckolivas/cgminer/blob/master/API-README">CGMiner commands</a> <%:are recognized and provide useful information:%></p>
 <ul>
   <li><em>pools</em></li>
   <li><em>devs</em></li>
@@ -61,18 +71,9 @@
   <li><em>lcd</em></li>
 </ul>
 
-<p><%:Example of Reading Pool Statistics:%></p>
-<pre>echo '{"command":"pools"}' | nc <YOUR_MINER_IP> 4028 | jq .</pre>
+<p><%:Example of reading pool statistics remotely from your development host:%></p>
+<pre>echo '{"command":"pools"}' | nc <%=hostname%> 4028 </pre>
 
-<p><%:How to run it:%></p>
-<pre>ssh root@<%=hostname%>
-root@<%=hostname%>:~# bosminer [FLAGS] --pool &lt;HOSTNAME:PORT&gt; --user &lt;USERNAME.WORKERNAME&gt;</pre>
-<p><%:Full options:%></p>
-<pre>bosminer -h</pre>
-<p><%:You can connect the miner to our Stratum V2 endpoint:%></p>
-<pre>bosminer --pool v2.stratum.slushpool.com:3336 --user &lt;USERNAME.WORKERNAME&gt;</pre>
-<p><%:If you want to connect the miner to your own pool, you have to run a V2%>&rarr;<%:V1 translating proxy locally. To compile and install the proxy, please follow these instructions:%></p>
-<p><a href="https://github.com/braiins/braiins/blob/bos-devel/open/stratum-proxy">https://github.com/braiins/braiins/blob/bos-devel/open/stratum-proxy</a></p>
 <p><%:Follow the development on%> <a href="https://github.com/braiins/braiins">https://github.com/braiins/braiins</a></p>
 
 <%+footer%>
