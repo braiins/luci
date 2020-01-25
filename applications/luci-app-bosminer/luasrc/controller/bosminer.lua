@@ -76,7 +76,7 @@ local function get_cfg_error(code, message)
 	reply.status.message = message
 	reply.status.generator = 'LuCI backend'
 	reply.status.timestamp = os.time()
-	return reply
+	return json.stringify(reply)
 end
 
 local function handle_cfg_command(cmd)
@@ -93,6 +93,9 @@ local function handle_cfg_command(cmd)
 		reply = json.parse(buffer)
 		if not reply then
 			reply = get_cfg_error(CFG_CODE_SYSTEM_ERROR, buffer)
+		else
+			-- return unmodified JSON response because LUA deserializer is not equivalent
+			reply = buffer
 		end
 	else
 		reply = get_cfg_error(CFG_CODE_SYSTEM_ERROR, 'Command did not return any data')
@@ -122,14 +125,14 @@ function action_cfg_metadata()
 	local reply = handle_cfg_command(CFG_HANDLE_METADATA .. " 2>&1")
 
 	http.prepare_content("application/json")
-	http.write_json(reply)
+	http.write(reply)
 end
 
 function action_cfg_data()
 	local reply = handle_cfg_command(CFG_HANDLE_DATA .. " 2>&1")
 
 	http.prepare_content("application/json")
-	http.write_json(reply)
+	http.write(reply)
 end
 
 function action_cfg_save()
@@ -145,7 +148,7 @@ function action_cfg_save()
 	end
 
 	http.prepare_content("application/json")
-	http.write_json(reply)
+	http.write(reply)
 end
 
 function action_status()
@@ -162,6 +165,7 @@ function action_status()
 		return
 	end
 
+	-- return unmodified JSON response because LUA deserializer is not equivalent
 	http.prepare_content("application/json")
-	http.write_json(reply)
+	http.write(result)
 end
