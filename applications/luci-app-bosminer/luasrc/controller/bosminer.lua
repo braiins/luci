@@ -27,6 +27,7 @@ function index()
 	entry({"admin", "miner", "cfg_metadata"}, call("action_cfg_metadata")).leaf = true
 	entry({"admin", "miner", "cfg_data"}, call("action_cfg_data")).leaf = true
 	entry({"admin", "miner", "cfg_save"}, call("action_cfg_save")).leaf = true
+	entry({"admin", "miner", "cfg_apply"}, call("action_cfg_apply")).leaf = true
 end
 
 local http = require "luci.http"
@@ -36,6 +37,7 @@ local socket = require "socket"
 local HOST = "127.0.0.1"
 local PORT = 4028
 
+local CFG_CODE_SUCCESS = 0
 local CFG_CODE_SYSTEM_ERROR = 1
 
 local CFG_HANDLER = "bosminer config"
@@ -146,6 +148,16 @@ function action_cfg_save()
 	else
 		reply = get_cfg_error(CFG_CODE_SYSTEM_ERROR, 'Cannot create temporary file')
 	end
+
+	http.prepare_content("application/json")
+	http.write(reply)
+end
+
+function action_cfg_apply()
+	local reply = nil
+
+	os.execute("/etc/init.d/bosminer reload &")	-- reload configuration
+	reply = get_cfg_error(CFG_CODE_SUCCESS, 'Reloading configuration...')
 
 	http.prepare_content("application/json")
 	http.write(reply)
