@@ -115,9 +115,12 @@ local function dump_to_tmp(data)
 			return nil
 		end
 		if not fd:write(data) then
+			nixio.fs.unlink(request_tmp)
 			request_tmp = nil
+			fd:close()
+		else
+			fd:close()
 		end
-		fd:close()
 	end
 
 	return request_tmp
