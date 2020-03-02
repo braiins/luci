@@ -6,7 +6,7 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=Miner Theme
+LUCI_TITLE:=BOSminer+ Theme
 LUCI_DEPENDS:=
 
 include ../../luci.mk
