@@ -165,7 +165,6 @@
 		<meta name="viewport" content="initial-scale=1.0">
 		<link rel="stylesheet" href="<%=media%>/cascade.css?v=git-18.320.40118-6598933">
 		<link rel="stylesheet" media="only screen and (max-device-width: 854px)" href="<%=media%>/mobile.css?v=git-18.320.40118-6598933" type="text/css" />
-		<link rel="shortcut icon" href="<%=media%>/5cd6e50acbc64fef58e56c0f_favicon.png" type="image/x-icon"/>
 		<% if node and node.css then %>
 			<link rel="stylesheet" href="<%=resource%>/<%=node.css%>">
 		<% end -%>
@@ -173,13 +172,19 @@
 			<style title="text/css"><%= css %></style>
 		<% end -%>
 		<script src="<%=resource%>/xhr.js?v=git-18.320.40118-6598933"></script>
+
+		<link rel="stylesheet" href="<%=media%>/theme/index.css">
+
+		<link rel="icon" type="image/png" sizes="16x16" href="<%=media%>/theme/img/favicon/base16.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="<%=media%>/theme/img/favicon/base32.png">
+		<link rel="icon" type="image/png" sizes="160x160" href="<%=media%>/theme/img/favicon/base160.png">
 	</head>
 
 	<body class="lang_<%=luci.i18n.context.lang%> <%- if node then %><%= striptags( node.title ) %><%- end %>">
 		<header>
 			<div class="fill">
 				<div class="container">
-					<a class="brand" href="#"><object type="image/svg+xml" data="<%=resource%>/braiinsOS_logo.svg" id="braiins-logo">Braiins OS | Open-source system for cryptocurrency devices</object></a>
+					<a class="brand" id="braiins_os_logo" href="#" title="Braiins OS | Open-source system for cryptocurrency devices"></a>
 					<% render_topmenu() %>
 					<div class="pull-right">
 						<% render_changes() %>
