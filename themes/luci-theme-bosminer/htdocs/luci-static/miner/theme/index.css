@@ -1,60 +1,61 @@
 /* BraiinsSans_Regular */
 @font-face {
-    font-family: 'BraiinsSans_Regular';
-    src: url('./fonts/BraiinsSans-Regular.woff2') format('woff2'),
-    url('./fonts/BraiinsSans-Regular.woff') format('woff');
-    font-style: normal;
-    font-weight: normal;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: subpixel-antialiased;
+  font-family: "BraiinsSans_Regular";
+  src: url("./fonts/BraiinsSans-Regular.woff2") format("woff2"),
+    url("./fonts/BraiinsSans-Regular.woff") format("woff");
+  font-style: normal;
+  font-weight: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
 /* BraiinsSans_Regular_Italic */
 @font-face {
-    font-family: 'BraiinsSans_Regular_Italic';
-    src: url('./fonts/BraiinsSans-Regular-Italic.woff2') format('woff2'),
-    url('./fonts/BraiinsSans-Regular-Italic.woff') format('woff');
-    font-style: italic;
-    font-weight: normal;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: subpixel-antialiased;
+  font-family: "BraiinsSans_Regular_Italic";
+  src: url("./fonts/BraiinsSans-Regular-Italic.woff2") format("woff2"),
+    url("./fonts/BraiinsSans-Regular-Italic.woff") format("woff");
+  font-style: italic;
+  font-weight: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
 /* Webfont: BraiinsSans_SemiBold */
 @font-face {
-    font-family: 'BraiinsSans_SemiBold';
-    src: url('./fonts/BraiinsSans-SemiBold.woff2') format('woff2'),
-    url('./fonts/BraiinsSans-SemiBold.woff') format('woff');
-    font-style: normal;
-    font-weight: 600;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: subpixel-antialiased;
+  font-family: "BraiinsSans_SemiBold";
+  src: url("./fonts/BraiinsSans-SemiBold.woff2") format("woff2"),
+    url("./fonts/BraiinsSans-SemiBold.woff") format("woff");
+  font-style: normal;
+  font-weight: 600;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
 /* BraiinsSans_Bold */
 @font-face {
-    font-family: 'BraiinsSans_Bold';
-    src: url('./fonts/BraiinsSans-Bold.woff2') format('woff2'),
-    url('./fonts/BraiinsSans-Bold.woff') format('woff');
-    font-style: normal;
-    font-weight: bold;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: subpixel-antialiased;
+  font-family: "BraiinsSans_Bold";
+  src: url("./fonts/BraiinsSans-Bold.woff2") format("woff2"),
+    url("./fonts/BraiinsSans-Bold.woff") format("woff");
+  font-style: normal;
+  font-weight: bold;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
 /* BraiinsSans_Bold_Italic */
 @font-face {
-    font-family: 'BraiinsSans_Bold_Italic';
-    src: url('./fonts/BraiinsSans-Bold-Italic.woff2') format('woff2'),
-    url('./fonts/BraiinsSans-Bold-Italic.woff') format('woff');
-    font-style: italic;
-    font-weight: bold;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: subpixel-antialiased;
+  font-family: "BraiinsSans_Bold_Italic";
+  src: url("./fonts/BraiinsSans-Bold-Italic.woff2") format("woff2"),
+    url("./fonts/BraiinsSans-Bold-Italic.woff") format("woff");
+  font-style: italic;
+  font-weight: bold;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
-body, html {
-    font-family: 'BraiinsSans_Regular', sans-serif, serif;
+body,
+html {
+  font-family: "BraiinsSans_Regular", sans-serif, serif;
 }
 
 h1,
@@ -63,65 +64,65 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: 'BraiinsSans_Bold' !important;
-    font-style: normal !important;
-    font-weight: bold !important;
+  font-family: "BraiinsSans_Bold" !important;
+  font-style: normal !important;
+  font-weight: bold !important;
 }
 
 b,
 strong {
-    font-family: 'BraiinsSans_SemiBold' !important;
-    font-style: normal !important;
-    font-weight: 600 !important;
+  font-family: "BraiinsSans_SemiBold" !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
 }
 
 i,
 em {
-    font-family: 'BraiinsSans_Italic', sans-serif, serif;
+  font-family: "BraiinsSans_Italic", sans-serif, serif;
 }
-
 
 a,
 a:visited {
-    color: #0062ff;
-    text-decoration: none !important;
+  color: #0062ff;
+  text-decoration: none !important;
 }
 
 a:hover {
-    border-bottom: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
 }
-
 
 /**
  * Header
  * ======
  */
 
-header .fill, header .dropdown-menu {
-    background: #161616 !important;
-    color: #fff !important;
+body > header .fill,
+body > header .dropdown-menu {
+  background: #161616 !important;
+  color: #fff !important;
 }
 
-header a, header a:visited {
-    color: #fff;
-    border: none !important;
+body > header a,
+body > header a:visited {
+  color: #fff;
+  border: none !important;
 }
 
-header .nav .dropdown-menu li a {
-    border: none !important;
-    padding: 10px 15px !important;
+body > header .nav .dropdown-menu li a {
+  border: none !important;
+  padding: 10px 15px !important;
 }
 
-header .nav .dropdown-menu li a:hover {
-    background: #000 !important;
-    color: #fff !important;
+body > header .nav .dropdown-menu li a:hover {
+  background: #000 !important;
+  color: #fff !important;
 }
 
-header .pull-right {
-    display: block;
-    margin-top: 6px;
+body > header .pull-right {
+  display: block;
+  margin-top: 6px;
+  margin-right: 15px;
 }
-
 
 /**
  * Logo
@@ -129,32 +130,24 @@ header .pull-right {
  */
 
 #braiins_os_logo {
-    background-image: url("./img/logo_base.svg");
-    background-position: left center;
-    background-repeat: no-repeat;
+  position: absolute;
+  top: 0;
+  left: 0;
 
-    /* width of the bigger version */
-    width: 192px;
-    height: 47px;
+  background-image: url("./img/logo_base.svg");
+  background-position: left center;
+  background-repeat: no-repeat;
 
-    /* cancel predefined styles */
-    margin: 0;
-    padding: 0;
+  /* width of the bigger version */
+  width: 192px;
+  height: 46px;
 
-    position: relative;
-    border: none !important;
-    outline: none !important;
-}
+  /* cancel predefined styles */
+  margin: 0;
+  padding: 0;
 
-#braiins_os_logo::before {
-    position: absolute;
-    display: block;
-    content: '';
-
-    right: 99%;
-    width: 1000px;
-    height: 100%;
-    background-color: #2F3FC5;
+  border: none !important;
+  outline: none !important;
 }
 
 /**
@@ -162,40 +155,58 @@ header .pull-right {
  * =======
  */
 
-input[type=button],
-input[type=reset],
-input[type=submit] {
-    height: 40px;
-    vertical-align: middle;
+input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+  height: 40px;
+  vertical-align: middle;
+}
+
+button[disabled],
+button[aria-disabled],
+input[type="button"][disabled],
+input[type="button"][aria-disabled] {
+  cursor: not-allowed !important;
 }
 
 .btn,
 .cbi-button {
-    padding: 0 15px !important;
+  padding: 0 15px !important;
 
-    height: 40px;
-    font-size: 14px;
+  height: 40px;
+  font-size: 14px;
 
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
 
-    background: #393939;
-    color: #fff !important;
+  background: #393939;
+  color: #fff !important;
 
-    transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9), outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
 }
 
-.btn:hover, .cbi-button:hover,
-.btn:focus, .cbi-button:focus {
-    color: #333;
-    text-decoration: none;
-    background-color: #525252;
+.btn.small,
+.cbi-button.small {
+  padding: 0 8px !important;
+  height: 20px;
+  font-size: 14px;
 }
 
-.btn:focus, .cbi-button:focus {
-    outline: 1px dotted #666;
+.btn:hover,
+.cbi-button:hover,
+.btn:focus,
+.cbi-button:focus {
+  color: #333;
+  text-decoration: none;
+  background-color: #525252;
+}
+
+.btn:focus,
+.cbi-button:focus {
+  outline: 1px dotted #666;
 }
 
 .btn.primary,
@@ -203,7 +214,7 @@ input[type=submit] {
 .cbi-page-actions .cbi-button-apply,
 .cbi-page-actions .cbi-button-save,
 .cbi-page-actions .cbi-button-reset {
-    background: #6B50FF;
+  background: #6b50ff;
 }
 
 .btn.primary:hover,
@@ -216,150 +227,166 @@ input[type=submit] {
 .cbi-page-actions .cbi-button-save:focus,
 .cbi-page-actions .cbi-button-reset:hover,
 .cbi-page-actions .cbi-button-reset:focus {
-    background: #5a4ad9;
+  background: #5a4ad9;
 }
 
-.btn.danger, .btn.error {
-    background: #fc4638;
+.btn.danger,
+.btn.error {
+  background: #fc4638;
 }
 
-.btn.danger:hover, .btn.error:hover,
-.btn.danger:focus, .btn.error:focus {
-    background: #cc3931;
+.btn.danger:hover,
+.btn.error:hover,
+.btn.danger:focus,
+.btn.error:focus {
+  background: #cc3931;
 }
 
 .btn.success {
-    background: #21a656;
+  background: #21a656;
 }
 
-.btn.success:hover, .btn.success:focus {
-    background: #1f994e;
+.btn.success:hover,
+.btn.success:focus {
+  background: #1f994e;
 }
 
 .btn.info {
-    background: #2b93ef;
+  background: #2b93ef;
 }
 
-.btn.info:hover, .btn.info:focus {
-    background: #257ecc;
+.btn.info:hover,
+.btn.info:focus {
+  background: #257ecc;
 }
 
-.cbi-button-add, .cbi-input-add {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/add.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-add,
+.cbi-input-add {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/add.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-apply, .cbi-input-apply {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/apply.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-apply,
+.cbi-input-apply {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/apply.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-input-save, .cbi-button-save {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/save.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-input-save,
+.cbi-button-save {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/save.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-reset, .cbi-input-reset {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/reset.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-reset,
+.cbi-input-reset {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/reset.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-edit, .cbi-input-edit {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/edit.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-edit,
+.cbi-input-edit {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/edit.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-remove, .cbi-input-remove {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/remove.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-remove,
+.cbi-input-remove {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/remove.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-reload, .cbi-input-reload {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/reload.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-reload,
+.cbi-input-reload {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/reload.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-link, .cbi-input-link {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/link.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-link,
+.cbi-input-link {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/link.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-download, .cbi-input-download {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/download.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-download,
+.cbi-input-download {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/download.svg") !important;
+  background-repeat: no-repeat !important;
 }
 
-.cbi-button-find, .cbi-input-find {
-    padding-right: 36px !important;
-    background-image: none !important;
-    background-position: right 8px center !important;
-    background-image: url("./img/icons/find.svg") !important;
-    background-repeat: no-repeat !important;
+.cbi-button-find,
+.cbi-input-find {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("./img/icons/find.svg") !important;
+  background-repeat: no-repeat !important;
 }
-
 
 /**
  * alert-message
  * =============
  */
 
-.alert-message, .alert-message.info {
-    border-width: 1px 1px 1px 3px;
-    border-style: solid;
+.alert-message,
+.alert-message.info {
+  border-width: 1px 1px 1px 3px;
+  border-style: solid;
 
-    border-color: #2b93ef;
-    background: #b2d1ed;
-    color: #000 !important;
+  border-color: #2b93ef;
+  background: #b2d1ed;
+  color: #000 !important;
 
-    text-shadow: none !important;
-    box-shadow: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
 }
 
 .alert-message * {
-    color: #000;
+  color: #000;
 }
 
-.alert-message.danger, .alert-message.error {
-    border-color: #fc4638;
-    background: #fac0bb;
-    color: #000;
+.alert-message.danger,
+.alert-message.error {
+  border-color: #fc4638;
+  background: #fac0bb;
+  color: #000;
 }
 
 .alert-message.success {
-    border-color: #37bf6e;
-    background: #8ebda0;
-    color: #000;
+  border-color: #37bf6e;
+  background: #8ebda0;
+  color: #000;
 }
 
 .alert-message a {
-    color: #0062ff;
+  color: #0062ff;
 }
 
 /**
@@ -368,32 +395,32 @@ input[type=submit] {
  */
 abbr[title],
 acronym[title] {
-    text-decoration: none !important;
-    border-bottom: 1px dotted;
-    padding-bottom: 0;
-    cursor: help;
+  text-decoration: none !important;
+  border-bottom: 1px dotted;
+  padding-bottom: 0;
+  cursor: help;
 }
 
 .label {
-    padding: 4px 8px;
-    font-weight: normal;
-    border-radius: 0;
+  padding: 4px 8px;
+  font-weight: normal;
+  border-radius: 0;
 }
 
 .label.important {
-    background-color: #fc4638;
+  background-color: #fc4638;
 }
 
 .label.warning {
-    background-color: #fdd13a;
+  background-color: #fdd13a;
 }
 
 .label.success {
-    background-color: #37bf6e;
+  background-color: #37bf6e;
 }
 
 .label.notice {
-    background-color: #2b93ef;
+  background-color: #2b93ef;
 }
 
 /**
@@ -404,49 +431,50 @@ acronym[title] {
 /* Form footers */
 .actions,
 .cbi-page-actions {
-    background: none;
-    padding: 0;
-    border: none;
-    border-radius: 0;
+  background: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
 }
 
 input,
 select {
-    height: 40px;
-    padding: 0 1rem;
+  height: 40px;
+  padding: 0 1rem;
 
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 18px;
-    letter-spacing: 0.16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0.16px;
 
-    color: #161616;
-    background-color: #f4f4f4;
+  color: #161616;
+  background-color: #f4f4f4;
 
-    outline: 2px solid transparent;
-    outline-offset: -2px;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
 
-    border: none;
-    border-bottom: 1px solid #8d8d8d;
-    border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #8d8d8d;
+  border-radius: 0;
 
-    transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9), outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
 
-    /* cancel built-ins */
-    box-shadow: none !important;
+  /* cancel built-ins */
+  box-shadow: none !important;
 }
 
 /* Big checkboxes (further styling is not possible) */
-input[type='checkbox'] {
-    width: 28px;
-    height: 28px;
+input[type="checkbox"] {
+  width: 28px;
+  height: 28px;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-    outline: 2px solid #0f62fe;
-    outline-offset: -2px;
+  outline: 2px solid #0f62fe;
+  outline-offset: -2px;
 }
 
 /* Disabled */
@@ -456,11 +484,11 @@ textarea[disabled],
 textarea[aria-disabled],
 select[disabled],
 select[aria-disabled] {
-    cursor: not-allowed !important;
-    outline: none !important;
-    background-color: #f4f4f4 !important;
-    border-bottom: 1px solid transparent !important;
-    color: #c6c6c6 !important;
+  cursor: not-allowed !important;
+  outline: none !important;
+  background-color: #f4f4f4 !important;
+  border-bottom: 1px solid transparent !important;
+  color: #c6c6c6 !important;
 }
 
 /* Readonly */
@@ -470,95 +498,94 @@ textarea[readonly],
 textarea[aria-readonly],
 select[aria-readonly],
 select[readonly] {
-    cursor: help !important;
-    outline: none !important;
-    background-color: #f4f4f4 !important;
-    border-bottom: 1px solid transparent !important;
-    color: #787878 !important;
+  cursor: help !important;
+  outline: none !important;
+  background-color: #f4f4f4 !important;
+  border-bottom: 1px solid transparent !important;
+  color: #787878 !important;
 }
 
-
 textarea {
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 18px;
-    letter-spacing: 0.16px;
-    outline: 2px solid transparent;
-    outline-offset: -2px;
-    background-color: #f4f4f4;
-    width: 100%;
-    min-width: 160px;
-    min-height: 40px;
-    padding: 11px 16px;
-    color: #161616;
-    order: 3;
-    resize: vertical;
-    border: none;
-    border-bottom: 1px solid #8d8d8d;
-    transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  background-color: #f4f4f4;
+  width: 100%;
+  min-width: 160px;
+  min-height: 40px;
+  padding: 11px 16px;
+  color: #161616;
+  order: 3;
+  resize: vertical;
+  border: none;
+  border-bottom: 1px solid #8d8d8d;
+  transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
     outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
 }
 
 textarea[disabled],
 textarea[aria-disabled] {
-    cursor: not-allowed;
-    outline: none;
-    background-color: #f4f4f4;
-    border-bottom: 1px solid transparent;
+  cursor: not-allowed;
+  outline: none;
+  background-color: #f4f4f4;
+  border-bottom: 1px solid transparent;
 }
 
 textarea[readonly],
 textarea[aria-readonly] {
-    cursor: not-allowed;
-    outline: none;
-    background-color: #787878;
-    border-bottom: 1px solid transparent;
+  cursor: not-allowed;
+  outline: none;
+  background-color: #787878;
+  border-bottom: 1px solid transparent;
 }
 
 /* Input fields with inline labels are smaller */
 label + input,
 label + textarea,
 label + select {
-    height: 24px;
+  height: 24px;
 }
 
 /* Fieldsets */
 fieldset {
-    position: relative;
+  position: relative;
 
-    margin: 32px 0;
-    padding: 16px;
-    border: 1px solid #b5b5b5;
+  margin: 32px 0;
+  padding: 16px;
+  border: 1px solid #b5b5b5;
 
-    transition-property: color, border;
-    transition-duration: 70ms;
-    transition-timing-function: cubic-bezier(0.2, 0, 0.38, 0.9);
+  transition-property: color, border;
+  transition-duration: 70ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0.38, 0.9);
 }
 
 fieldset:hover,
 fieldset:focus,
 fieldset:focus-within {
-    border-style: solid;
-    border-color: #313131;
+  border-style: solid;
+  border-color: #313131;
 }
 
 fieldset > legend {
-    font-weight: bold;
-    text-transform: capitalize;
-    padding: 0 8px;
-    margin: 0 0 0 -8px;
+  font-weight: bold;
+  text-transform: capitalize;
+  padding: 0 8px;
+  margin: 0 0 0 -8px;
 }
 
 fieldset + fieldset {
-    margin-top: 42px;
+  margin-top: 42px;
 }
 
 fieldset > fieldset:first-of-type {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 fieldset > fieldset:last-of-type {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 /**
@@ -567,8 +594,8 @@ fieldset > fieldset:last-of-type {
  */
 
 form .cbi-value label.cbi-value-title {
-    /* we have bigger inputs so the labels need to be pushed lower */
-    padding-top: 12px;
+  /* we have bigger inputs so the labels need to be pushed lower */
+  padding-top: 12px;
 }
 
 /**
@@ -576,17 +603,17 @@ form .cbi-value label.cbi-value-title {
  * ======
  */
 table tr th {
-    vertical-align: bottom;
+  vertical-align: bottom;
 }
 
 table tr td {
-    vertical-align: middle;
+  vertical-align: middle;
 }
 
 table tr td .btn,
 table tr td .cbi-button {
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
 }
 
 /**
@@ -594,8 +621,8 @@ table tr td .cbi-button {
  * =============
  */
 img[src$="help.gif"] {
-    fill: dodgerblue;
-    content: url("./img/icons/help.svg");
+  fill: dodgerblue;
+  content: url("./img/icons/help.svg");
 }
 
 /**
@@ -603,12 +630,12 @@ img[src$="help.gif"] {
  * ===================
  */
 .cbi-map > form[action$="iptables_action"] {
-    position: absolute;
-    z-index: 10;
+  position: absolute;
+  z-index: 10;
 
-    margin: 16px 16px 16px 0;
+  margin: 16px 16px 16px 0;
 }
 
 .cbi-map > form[action$="iptables_action"] + fieldset {
-    padding-top: 32px;
+  padding-top: 32px;
 }
