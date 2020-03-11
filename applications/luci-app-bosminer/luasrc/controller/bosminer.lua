@@ -19,9 +19,9 @@ module("luci.controller.bosminer", package.seeall)
 function index()
 	entry({"admin", "miner"}, alias("admin", "miner", "overview"), _("Miner"), 10).index = true
 	e = entry({"admin", "miner", "overview"}, template("overview"), _("Overview"), 1)
-	e.css = "bosminer_overview/styles.dd486bc7fd9fd28b78bc.css"
+	e.css = "bosminer_overview/styles.7892c1a1960a25b04d38.css"
 	e = entry({"admin", "miner", "config"}, template("config"), _("Configuration"), 2)
-	e.css = "bosminer_config/styles.6fa35751d48b801ab13b.css"
+	e.css = "bosminer_config/styles.182605929b84ac1c189e.css"
 
 	entry({"admin", "miner", "api_status"}, call("action_status")).leaf = true
 	entry({"admin", "miner", "cfg_metadata"}, call("action_cfg_metadata")).leaf = true
