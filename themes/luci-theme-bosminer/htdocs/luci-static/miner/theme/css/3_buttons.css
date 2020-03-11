@@ -1,0 +1,194 @@
+input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+  height: 40px;
+  vertical-align: middle;
+}
+
+button[disabled],
+button[aria-disabled],
+input[type="button"][disabled],
+input[type="button"][aria-disabled] {
+  cursor: not-allowed !important;
+}
+
+.btn,
+.cbi-button {
+  padding: 0 15px !important;
+
+  height: 40px;
+  font-size: 14px;
+
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+
+  background: #393939;
+  color: #fff !important;
+
+  transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+.btn.small,
+.cbi-button.small {
+  padding: 0 8px !important;
+  height: 20px;
+  font-size: 14px;
+}
+
+.btn:hover,
+.cbi-button:hover,
+.btn:focus,
+.cbi-button:focus {
+  color: #333;
+  text-decoration: none;
+  background-color: #525252;
+}
+
+.btn:focus,
+.cbi-button:focus {
+  outline: 1px dotted #666;
+}
+
+.btn.primary,
+.cbi-input-save,
+.cbi-page-actions .cbi-button-apply,
+.cbi-page-actions .cbi-button-save,
+.cbi-page-actions .cbi-button-reset {
+  background: #6b50ff;
+}
+
+.btn.primary:hover,
+.btn.primary:focus,
+.cbi-input-save:hover,
+.cbi-input-save:focus,
+.cbi-page-actions .cbi-button-apply:hover,
+.cbi-page-actions .cbi-button-apply:focus,
+.cbi-page-actions .cbi-button-save:hover,
+.cbi-page-actions .cbi-button-save:focus,
+.cbi-page-actions .cbi-button-reset:hover,
+.cbi-page-actions .cbi-button-reset:focus {
+  background: #5a4ad9;
+}
+
+.btn.danger,
+.btn.error {
+  background: #fc4638;
+}
+
+.btn.danger:hover,
+.btn.error:hover,
+.btn.danger:focus,
+.btn.error:focus {
+  background: #cc3931;
+}
+
+.btn.success {
+  background: #21a656;
+}
+
+.btn.success:hover,
+.btn.success:focus {
+  background: #1f994e;
+}
+
+.btn.info {
+  background: #2b93ef;
+}
+
+.btn.info:hover,
+.btn.info:focus {
+  background: #257ecc;
+}
+
+.cbi-button-add,
+.cbi-input-add {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/add.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-apply,
+.cbi-input-apply {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/apply.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-input-save,
+.cbi-button-save {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/save.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-reset,
+.cbi-input-reset {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/reset.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-edit,
+.cbi-input-edit {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/edit.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-remove,
+.cbi-input-remove {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/remove.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-reload,
+.cbi-input-reload {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/reload.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-link,
+.cbi-input-link {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/link.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-download,
+.cbi-input-download {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url("../img/icons/download.svg") !important;
+  background-repeat: no-repeat !important;
+}
+
+.cbi-button-find,
+.cbi-input-find {
+  padding-right: 36px !important;
+  background-image: none !important;
+  background-position: right 8px center !important;
+  background-image: url(".../img/icons/find.svg") !important;
+  background-repeat: no-repeat !important;
+}

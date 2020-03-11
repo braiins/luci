@@ -1,0 +1,54 @@
+/* BraiinsSans_Regular */
+@font-face {
+  font-family: "BraiinsSans_Regular";
+  src: url("../fonts/BraiinsSans-Regular.woff2") format("woff2"),
+    url("../fonts/BraiinsSans-Regular.woff") format("woff");
+  font-style: normal;
+  font-weight: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* BraiinsSans_Regular_Italic */
+@font-face {
+  font-family: "BraiinsSans_Regular_Italic";
+  src: url("../fonts/BraiinsSans-Regular-Italic.woff2") format("woff2"),
+    url("../fonts/BraiinsSans-Regular-Italic.woff") format("woff");
+  font-style: italic;
+  font-weight: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* Webfont: BraiinsSans_SemiBold */
+@font-face {
+  font-family: "BraiinsSans_SemiBold";
+  src: url("../fonts/BraiinsSans-SemiBold.woff2") format("woff2"),
+    url("../fonts/BraiinsSans-SemiBold.woff") format("woff");
+  font-style: normal;
+  font-weight: 600;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* BraiinsSans_Bold */
+@font-face {
+  font-family: "BraiinsSans_Bold";
+  src: url("../fonts/BraiinsSans-Bold.woff2") format("woff2"),
+    url("../fonts/BraiinsSans-Bold.woff") format("woff");
+  font-style: normal;
+  font-weight: bold;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* BraiinsSans_Bold_Italic */
+@font-face {
+  font-family: "BraiinsSans_Bold_Italic";
+  src: url("../fonts/BraiinsSans-Bold-Italic.woff2") format("woff2"),
+    url("../fonts/BraiinsSans-Bold-Italic.woff") format("woff");
+  font-style: italic;
+  font-weight: bold;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+}

@@ -1,0 +1,53 @@
+body > header .fill {
+  height: 46px;
+}
+
+body > header .fill,
+body > header .dropdown-menu {
+  background: #161616 !important;
+  color: #fff !important;
+}
+
+body > header a,
+body > header a:visited {
+  color: #fff;
+  border: none !important;
+}
+
+body > header .nav .dropdown-menu li a {
+  border: none !important;
+  padding: 10px 15px !important;
+}
+
+body > header .nav .dropdown-menu li a:hover {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+body > header .pull-right {
+  display: block;
+  margin-top: 6px;
+  margin-right: 15px;
+}
+
+/* Logo */
+#braiins_os_logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  background-image: url("../img/logo_base.svg");
+  background-position: left center;
+  background-repeat: no-repeat;
+
+  /* width of the bigger version */
+  width: 192px;
+  height: 46px;
+
+  /* cancel predefined styles */
+  margin: 0;
+  padding: 0;
+
+  border: none !important;
+  outline: none !important;
+}

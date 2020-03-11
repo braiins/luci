@@ -1,0 +1,67 @@
+/**
+ * Miscelanious
+ * ============
+ */
+abbr[title],
+acronym[title] {
+  text-decoration: none !important;
+  border-bottom: 1px dotted;
+  padding-bottom: 0;
+  cursor: help;
+}
+
+.label {
+  padding: 4px 8px;
+  font-weight: normal;
+  border-radius: 0;
+}
+
+.label.important {
+  background-color: #fc4638;
+}
+
+.label.warning {
+  background-color: #fdd13a;
+}
+
+.label.success {
+  background-color: #37bf6e;
+}
+
+.label.notice {
+  background-color: #2b93ef;
+}
+
+/**
+ * Settings
+ * ========
+ */
+
+form .cbi-value label.cbi-value-title {
+  /* we have bigger inputs so the labels need to be pushed lower */
+  padding-top: 12px;
+}
+
+/**
+ * Replace icons
+ * =============
+ */
+img[src$="help.gif"] {
+  fill: dodgerblue;
+  content: url("../img/icons/help.svg");
+}
+
+/**
+ * Page-specific fixes
+ * ===================
+ */
+.cbi-map > form[action$="iptables_action"] {
+  position: absolute;
+  z-index: 10;
+
+  margin: 16px 16px 16px 0;
+}
+
+.cbi-map > form[action$="iptables_action"] + fieldset {
+  padding-top: 32px;
+}

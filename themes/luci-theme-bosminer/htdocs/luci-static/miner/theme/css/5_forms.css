@@ -1,0 +1,267 @@
+/* Form footers */
+.actions,
+.cbi-page-actions {
+  background: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+}
+
+input,
+select {
+  height: 40px;
+  padding: 0 1rem;
+
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+
+  color: #161616;
+  background-color: #f4f4f4;
+
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+
+  border: none;
+  border-bottom: 1px solid #8d8d8d;
+  border-radius: 0;
+
+  transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  /* cancel built-ins */
+  box-shadow: none !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #0f62fe;
+  outline-offset: -2px;
+}
+
+/* Disabled */
+input[disabled],
+input[aria-disabled],
+textarea[disabled],
+textarea[aria-disabled],
+select[disabled],
+select[aria-disabled] {
+  cursor: not-allowed !important;
+  outline: none !important;
+  background-color: #f4f4f4 !important;
+  border-bottom: 1px solid transparent !important;
+  color: #c6c6c6 !important;
+}
+
+/* Readonly */
+input[readonly],
+input[aria-readonly],
+textarea[readonly],
+textarea[aria-readonly],
+select[aria-readonly],
+select[readonly] {
+  cursor: help !important;
+  outline: none !important;
+  background-color: #f4f4f4 !important;
+  border-bottom: 1px solid transparent !important;
+  color: #787878 !important;
+}
+
+textarea {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  background-color: #f4f4f4;
+  width: 100%;
+  min-width: 160px;
+  min-height: 40px;
+  padding: 11px 16px;
+  color: #161616;
+  order: 3;
+  resize: vertical;
+  border: none;
+  border-bottom: 1px solid #8d8d8d;
+  transition: background-color 70ms cubic-bezier(0.2, 0, 0.38, 0.9),
+    outline 70ms cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+textarea[disabled],
+textarea[aria-disabled] {
+  cursor: not-allowed;
+  outline: none;
+  background-color: #f4f4f4;
+  border-bottom: 1px solid transparent;
+}
+
+textarea[readonly],
+textarea[aria-readonly] {
+  cursor: not-allowed;
+  outline: none;
+  background-color: #787878;
+  border-bottom: 1px solid transparent;
+}
+
+/* Input fields with inline labels are smaller */
+label + input,
+label + textarea,
+label + select {
+  height: 24px;
+}
+
+/* Fieldsets */
+fieldset {
+  position: relative;
+
+  margin: 32px 0;
+  padding: 16px;
+  border: 1px solid #b5b5b5;
+
+  transition-property: color, border;
+  transition-duration: 70ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+fieldset:hover,
+fieldset:focus,
+fieldset:focus-within {
+  border-style: solid;
+  border-color: #313131;
+}
+
+fieldset > legend {
+  font-weight: bold;
+  text-transform: capitalize;
+  padding: 0 8px;
+  margin: 0 0 0 -8px;
+}
+
+fieldset + fieldset {
+  margin-top: 42px;
+}
+
+fieldset > fieldset:first-of-type {
+  margin-top: 0;
+}
+
+fieldset > fieldset:last-of-type {
+  margin-bottom: 0;
+}
+
+/**
+ * Checkbox
+ * ========
+ */
+
+/* Big checkboxes (further styling is not possible) */
+input[type="checkbox"] {
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+
+  position: relative;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-bottom: 2px;
+
+  color: black; /* Set here so that Windows' High-Contrast Mode can override */
+}
+
+/* Required because `$css--reset: true` cannot currently apply to this `::before` and `::after` */
+input[type="checkbox"]::before,
+input[type="checkbox"]::after {
+  box-sizing: border-box;
+}
+
+/* Spacing for presentational checkbox */
+input[type="checkbox"]::before {
+  display: block;
+  content: "";
+
+  /*
+     According to the spec, we'll want the bounding box for our checkbox to be 16px.
+     The border size will be what will be updated during the different checkbox states.
+  */
+  width: 16px;
+  height: 16px;
+
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  /* Checkboxes with a background color look visually off against a parent container. */
+  background-color: transparent;
+  border: 1px solid #161616;
+  border-radius: 1px;
+}
+
+/* Create the appearance of the check in the `after` pseudo-element */
+input[type="checkbox"]::after {
+  content: "";
+
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 9px;
+  height: 5px;
+  background: none;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: scale(0) rotate(-45deg);
+  transform-origin: bottom right;
+  margin-top: -3px;
+}
+
+/* Update properties for checked checkbox */
+input[type="checkbox"]:checked::before,
+input[type="checkbox"]:indeterminate::before {
+  background-color: #161616;
+  border-color: #161616;
+  border-width: 1px;
+}
+
+/* Display the check */
+input[type="checkbox"]:checked::after {
+  transform: scale(1) rotate(-45deg);
+}
+
+/* Indeterminate symbol */
+input[type="checkbox"]:indeterminate::after {
+  transform: scale(1) rotate(0deg);
+  border-left: 0 solid #fff;
+  border-bottom: 2px solid #fff;
+  width: 8px;
+  top: 11px;
+}
+
+/* Focus */
+
+/* Unchecked */
+input[type="checkbox"]:focus,
+/* Checked */
+input[type="checkbox"]:checked:focus,
+/* Indeterminate */
+input[type="checkbox"]:indeterminate:focus {
+  outline: 3px solid #0f62fe;
+  outline-offset: 0;
+}
+
+/* Disabled */
+input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  color: #c6c6c6;
+}
+
+input[type="checkbox"]:disabled::before {
+  border-color: #c6c6c6;
+}
+
+input[type="checkbox"]:checked:disabled::before,
+input[type="checkbox"]:indeterminate:disabled::before {
+  background-color: #c6c6c6;
+}

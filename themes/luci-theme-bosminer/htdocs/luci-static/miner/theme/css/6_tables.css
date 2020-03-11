@@ -1,0 +1,13 @@
+table tr th {
+  vertical-align: bottom;
+}
+
+table tr td {
+  vertical-align: middle;
+}
+
+table tr td .btn,
+table tr td .cbi-button {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}

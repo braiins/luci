@@ -1,0 +1,37 @@
+body,
+html {
+  font-family: "BraiinsSans_Regular", sans-serif, serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "BraiinsSans_Bold" !important;
+  font-style: normal !important;
+  font-weight: bold !important;
+}
+
+b,
+strong {
+  font-family: "BraiinsSans_SemiBold" !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+}
+
+i,
+em {
+  font-family: "BraiinsSans_Italic", sans-serif, serif;
+}
+
+a,
+a:visited {
+  color: #0062ff;
+  text-decoration: none !important;
+}
+
+a:hover {
+  border-bottom: 1px solid currentColor;
+}

@@ -1,0 +1,33 @@
+.alert-message,
+.alert-message.info {
+  border-width: 1px 1px 1px 3px;
+  border-style: solid;
+
+  border-color: #2b93ef;
+  background: #b2d1ed;
+  color: #000 !important;
+
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.alert-message * {
+  color: #000;
+}
+
+.alert-message.danger,
+.alert-message.error {
+  border-color: #fc4638;
+  background: #fac0bb;
+  color: #000;
+}
+
+.alert-message.success {
+  border-color: #37bf6e;
+  background: #8ebda0;
+  color: #000;
+}
+
+.alert-message a {
+  color: #0062ff;
+}
