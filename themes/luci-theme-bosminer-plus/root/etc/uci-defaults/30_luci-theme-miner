@@ -1,6 +1,6 @@
 #!/bin/sh
 uci batch <<-EOF
-	set luci.themes.Bootstrap=/luci-static/miner
+	set luci.themes.BOSminer_plus=/luci-static/miner
 	set luci.main.mediaurlbase=/luci-static/miner
 	commit luci
 EOF
