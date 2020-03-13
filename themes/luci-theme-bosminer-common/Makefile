@@ -6,8 +6,8 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=BOSminer+ Theme
-LUCI_DEPENDS:=+luci-theme-bosminer-common
+LUCI_TITLE:=BOSminer Theme Common Files
+LUCI_DEPENDS:=
 
 include ../../luci.mk
 
