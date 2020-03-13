@@ -21,7 +21,7 @@ function index()
 	e = entry({"admin", "miner", "overview"}, template("overview"), _("Overview"), 1)
 	e.css = "bosminer_overview/styles.7892c1a1960a25b04d38.css"
 	e = entry({"admin", "miner", "config"}, template("config"), _("Configuration"), 2)
-	e.css = "bosminer_config/styles.182605929b84ac1c189e.css"
+	e.css = "bosminer_config/styles.34b70922a55d6a8bc851.css"
 
 	entry({"admin", "miner", "api_status"}, call("action_status")).leaf = true
 	entry({"admin", "miner", "cfg_metadata"}, call("action_cfg_metadata")).leaf = true
