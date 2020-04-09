@@ -155,6 +155,19 @@
 			end
 		end
 	end
+
+	local is_nightly = false
+	local logo_prefix = ''
+	local logo_image_file = 'logo_base.svg'
+	local f = io.open('/etc/bos_version')
+	if f then
+		local version = f:read('*l')
+		if version and version:match('%-nightly$') then
+			is_nightly = true
+			logo_prefix = 'nightly-'
+			logo_image_file = 'nightly_logo_base.png'
+		end
+	end
 -%>
 <!DOCTYPE html>
 <html lang="<%=luci.i18n.context.lang%>">
@@ -175,16 +188,17 @@
 
 		<link rel="stylesheet" href="<%=media%>/theme/index.css">
 
-		<link rel="icon" type="image/png" sizes="16x16" href="<%=media%>/theme/img/favicon/base-16.png">
-		<link rel="icon" type="image/png" sizes="32x32" href="<%=media%>/theme/img/favicon/base-32.png">
-		<link rel="icon" type="image/png" sizes="160x160" href="<%=media%>/theme/img/favicon/base-160.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="<%=media%>/theme/img/favicon/<%=logo_prefix%>base-16.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="<%=media%>/theme/img/favicon/<%=logo_prefix%>base-32.png">
+		<link rel="icon" type="image/png" sizes="160x160" href="<%=media%>/theme/img/favicon/<%=logo_prefix%>base-160.png">
 	</head>
 
 	<body class="lang_<%=luci.i18n.context.lang%> <%- if node then %><%= striptags( node.title ) %><%- end %>">
 		<header>
 			<div class="fill">
 				<div class="container">
-					<a class="brand" id="braiins_os_logo" href="#" title="Braiins OS | Open-source system for cryptocurrency devices"></a>
+					<a class="brand" id="braiins_os_logo" style="background-image: url('<%=media%>/theme/img/<%=logo_image_file%>')" href="#" title="Braiins OS | Open-source system for cryptocurrency devices"></a>
+
 					<% render_topmenu() %>
 					<div class="pull-right">
 						<% render_changes() %>
